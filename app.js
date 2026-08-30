@@ -111,7 +111,7 @@ $("#register-form").addEventListener("submit", async (e)=>{
     const email = $("#register-email").value.trim();
     const password = $("#register-password").value;
     const name = $("#register-name").value.trim();
-    const role = $("#register-role").value;
+    const role = "customer";
     const cred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(cred.user, { displayName: name });
     await setDoc(doc(db,"users",cred.user.uid), {
