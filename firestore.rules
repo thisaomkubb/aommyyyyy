@@ -1,0 +1,57 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "owner";
+    }
+
+    function isStaff() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ["owner", "mechanic"];
+    }
+
+    match /users/{uid} {
+      allow create: if signedIn() && request.auth.uid == uid;
+      allow read: if signedIn() && (request.auth.uid == uid || isOwner());
+      allow update: if signedIn() && (request.auth.uid == uid || isOwner());
+      allow delete: if isOwner();
+    }
+
+    match /motorcycles/{id} {
+      allow read, create: if signedIn();
+      allow update, delete: if signedIn() &&
+        (resource.data.customerId == request.auth.uid || isOwner());
+    }
+
+    match /bookings/{id} {
+      allow read, create: if signedIn();
+      allow update, delete: if signedIn() &&
+        (resource.data.customerId == request.auth.uid || isStaff());
+    }
+
+    match /repairs/{id} {
+      allow read: if signedIn();
+      allow create: if isStaff();
+      allow update: if isStaff();
+      allow delete: if isOwner();
+    }
+
+    match /parts/{id} {
+      allow read: if signedIn();
+      allow create, update, delete: if isOwner();
+    }
+
+    match /engineCalculations/{id} {
+      allow read, create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow delete: if signedIn() && resource.data.userId == request.auth.uid;
+      allow update: if signedIn() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MOTOBOX — Motorcycle Workshop</title>
+  <meta name="theme-color" content="#0b0d10" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="toast-root"></div>
+
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-bento">
+      <div class="auth-brand">
+        <div class="brand-mark"><i class="fa-solid fa-motorcycle"></i></div>
+        <div>
+          <div class="brand-name">MOTOBOX</div>
+          <div class="brand-sub">SMART MOTORCYCLE WORKSHOP</div>
+        </div>
+      </div>
+
+      <div class="auth-copy">
+        <span class="eyebrow">BENTO WORKSHOP OS</span>
+        <h1>ดูแลรถทั้งคัน<br><span>อยู่ในที่เดียว</span></h1>
+        <p>ระบบร้านมอเตอร์ไซค์สำหรับลูกค้า ช่าง และเจ้าของร้าน พร้อมเครื่องมือคำนวณเครื่องยนต์ที่มาจากระบบเดิม</p>
+        <div class="feature-pills">
+          <span><i class="fa-solid fa-cloud"></i> Firebase</span>
+          <span><i class="fa-solid fa-mobile-screen"></i> Responsive</span>
+          <span><i class="fa-solid fa-calculator"></i> Engine Lab</span>
+        </div>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-auth-tab="login">เข้าสู่ระบบ</button>
+          <button class="auth-tab" data-auth-tab="register">สมัครสมาชิก</button>
+        </div>
+
+        <form id="login-form" class="auth-form">
+          <label>อีเมล<input id="login-email" type="email" placeholder="you@example.com" required></label>
+          <label>รหัสผ่าน<input id="login-password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" required></label>
+          <button class="btn btn-primary btn-full" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> เข้าสู่ระบบ</button>
+          <div class="demo-note">สำหรับทดสอบระบบ: บทบาทจะถูกอ่านจาก Firestore profile</div>
+        </form>
+
+        <form id="register-form" class="auth-form hidden">
+          <label>ชื่อ-นามสกุล<input id="register-name" type="text" placeholder="ชื่อของคุณ" required></label>
+          <label>อีเมล<input id="register-email" type="email" placeholder="you@example.com" required></label>
+          <label>รหัสผ่าน<input id="register-password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" minlength="6" required></label>
+          <label>บทบาท
+            <select id="register-role">
+              <option value="customer">ลูกค้า</option>
+              <option value="mechanic">ช่าง</option>
+            </select>
+          </label>
+          <button class="btn btn-primary btn-full" type="submit"><i class="fa-solid fa-user-plus"></i> สร้างบัญชี</button>
+          <div class="demo-note">บัญชีเจ้าของร้านควรกำหนดผ่าน Firebase Console / Firestore เท่านั้น</div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="app-screen" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand-row">
+          <div class="brand-mark small"><i class="fa-solid fa-motorcycle"></i></div>
+          <div>
+            <div class="brand-name">MOTOBOX</div>
+            <div class="brand-sub">WORKSHOP OS</div>
+          </div>
+        </div>
+
+        <nav id="main-nav" class="main-nav"></nav>
+      </div>
+      <div class="sidebar-bottom">
+        <button class="nav-item" data-action="calculator"><i class="fa-solid fa-gauge-high"></i><span>Engine Lab</span></button>
+        <button class="nav-item" data-action="profile"><i class="fa-solid fa-user-gear"></i><span>โปรไฟล์</span></button>
+        <button class="nav-item logout" data-action="logout"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div>
+          <button class="mobile-menu" id="mobile-menu"><i class="fa-solid fa-bars"></i></button>
+          <div id="page-kicker" class="eyebrow">DASHBOARD</div>
+          <h2 id="page-title">ภาพรวมร้าน</h2>
+        </div>
+        <div class="top-user">
+          <div id="role-badge" class="role-badge">CUSTOMER</div>
+          <div class="avatar" id="avatar">A</div>
+        </div>
+      </header>
+
+      <section id="view-root" class="content-wrap"></section>
+    </main>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
