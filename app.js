@@ -805,23 +805,228 @@ async function openJobDetail(job) {
 
 async function renderHistory(view) {
 
+  const role = state.profile.role;
+
+  // =========================
+  // Engine Lab History
+  // =========================
   const calcs = await fetchCollection(
     "engineCalculations",
     [["userId", "==", state.user.uid]]
   );
 
-  const repairs =
-    state.profile.role === "mechanic"
-      ? await fetchCollection(
-          "repairs",
-          [["mechanicId", "==", state.user.uid]]
-        )
-      : await fetchCollection(
-          "repairs",
-          [["customerId", "==", state.user.uid]]
-        );
 
-  view.innerHTML = `...`;
+  // =========================
+  // Repair History
+  // =========================
+  let repairs = [];
+
+  if (role === "mechanic") {
+
+    repairs = await fetchCollection(
+      "repairs",
+      [["mechanicId", "==", state.user.uid]]
+    );
+
+  } else if (role === "customer") {
+
+    repairs = await fetchCollection(
+      "repairs",
+      [["customerId", "==", state.user.uid]]
+    );
+
+  } else if (role === "owner") {
+
+    repairs = await fetchCollection("repairs");
+
+  }
+
+
+  // =========================
+  // สร้างหน้าเว็บ
+  // =========================
+  view.innerHTML = `
+
+    <div class="bento-grid">
+
+
+      <!-- =========================
+           ENGINE LAB HISTORY
+           ========================= -->
+      <div class="bento-card wide">
+
+        <div class="card-head">
+
+          <div>
+            <span class="eyebrow">
+              ENGINE CALCULATIONS
+            </span>
+
+            <h3>
+              ประวัติ Engine Lab
+            </h3>
+          </div>
+
+          <span class="status info">
+            ${calcs.length} รายการ
+          </span>
+
+        </div>
+
+
+        ${
+          calcs.length > 0
+
+          ? calcs.map(c => `
+
+              <div class="list-row">
+
+                <div class="row-icon purple">
+                  <i class="fa-solid fa-gauge-high"></i>
+                </div>
+
+
+                <div class="row-main">
+
+                  <strong>
+                    ${escapeHtml(
+                      c.label || "Engine Build"
+                    )}
+                  </strong>
+
+                  <span>
+                    ${Number(c.cc || 0).toFixed(0)}
+                    CC
+                    •
+                    CR ${escapeHtml(c.cr || "-")}
+                    •
+                    ${Number(c.rpm || 0).toLocaleString()}
+                    RPM
+                  </span>
+
+                </div>
+
+
+                <span class="muted">
+                  ${escapeHtml(
+                    c.createdAtText || ""
+                  )}
+                </span>
+
+              </div>
+
+            `).join("")
+
+          : emptyInline(
+              "ยังไม่มีแบบคำนวณที่บันทึก"
+            )
+        }
+
+      </div>
+
+
+
+      <!-- =========================
+           REPAIR HISTORY
+           ========================= -->
+      <div class="bento-card wide">
+
+        <div class="card-head">
+
+          <div>
+            <span class="eyebrow">
+              REPAIR HISTORY
+            </span>
+
+            <h3>
+              ประวัติงานซ่อม
+            </h3>
+          </div>
+
+          <span class="status success">
+            ${repairs.length} งาน
+          </span>
+
+        </div>
+
+
+        ${
+          repairs.length > 0
+
+          ? repairs.map(j => `
+
+              <div class="list-row">
+
+                <div class="row-icon">
+                  <i class="fa-solid fa-screwdriver-wrench"></i>
+                </div>
+
+
+                <div class="row-main">
+
+                  <strong>
+                    ${escapeHtml(
+                      j.motorcycleModel ||
+                      "รถไม่ระบุ"
+                    )}
+                  </strong>
+
+                  <span>
+                    ${escapeHtml(
+                      j.service ||
+                      j.problem ||
+                      "งานซ่อม"
+                    )}
+                  </span>
+
+                  ${
+                    j.mechanicName
+                    ? `
+                      <span>
+                        ช่าง:
+                        ${escapeHtml(
+                          j.mechanicName
+                        )}
+                      </span>
+                    `
+                    : ""
+                  }
+
+                </div>
+
+
+                <div>
+
+                  ${statusPill(
+                    j.status ||
+                    "รอดำเนินการ"
+                  )}
+
+                  <div
+                    class="muted"
+                    style="margin-top:5px;text-align:right;"
+                  >
+                    ฿${Number(
+                      j.totalCost || 0
+                    ).toLocaleString()}
+                  </div>
+
+                </div>
+
+              </div>
+
+            `).join("")
+
+          : emptyInline(
+              "ยังไม่มีประวัติงานซ่อม"
+            )
+        }
+
+      </div>
+
+
+    </div>
+  `;
 }
 
 async function renderCustomers(view) {
