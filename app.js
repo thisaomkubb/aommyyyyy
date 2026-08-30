@@ -1244,7 +1244,7 @@ function currentCalcData(){
     bore:val("bore"), stroke:val("stroke-orig"), strokePlus:val("stroke-plus"), totalStroke:val("res-total-stroke"),
     rpm:val("max-rpm"), headType:$("#head-type").value, fuel:$("#fuel-type").value, cc:Number($("#res-cc").textContent)||0,
     ccHead:val("cc-head"), pistonDrop:val("piston-drop"), gasket:val("gasket-thick"), cr:$("#res-cr-ratio-display").textContent,
-    rodLength:val("rod-length"), rodRatio:$("#res-rod-ratio-display").textContent, mps:val("res-mps-val"),
+    rodLength:val("rod-length"), rodRatio:$("#res-rod-ratio-display").textContent, mps:Number($("#res-mps-val").textContent)||0,,
     vIn:val("v-in-size"), vOut:val("v-out-size"), vgIn:$("#res-vg-in").textContent, vgOut:$("#res-vg-out").textContent,
     hp:val("target-hp"), bsfc:val("input-bsfc"), duty:val("input-duty"), injector:$("#res-injector-flow").textContent,
     ve:val("input-ve"), vTarget:val("input-v-target"), throttle:$("#res-throttle-dia").textContent,
