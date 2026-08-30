@@ -214,7 +214,15 @@ async function fetchCollection(name, filters=[]) {
 }
 
 function statusPill(status="รอดำเนินการ") {
-  const map = { "เสร็จสิ้น":"success","กำลังซ่อม":"warn","รอตรวจ":"info","รออนุมัติ":"warn","ยกเลิก":"danger","รอดำเนินการ":"info" };
+  const map = {
+  "เสร็จสิ้น":"success",
+  "กำลังซ่อม":"warn",
+  "รอตรวจ":"info",
+  "รับงานแล้ว":"info",
+  "รออนุมัติ":"warn",
+  "ยกเลิก":"danger",
+  "รอดำเนินการ":"info"
+};
   return `<span class="status ${map[status]||"info"}">${escapeHtml(status)}</span>`;
 }
 
