@@ -47,18 +47,43 @@
           <button class="btn btn-primary btn-full" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> เข้าสู่ระบบ</button>
         </form>
 
-        <form id="register-form" class="auth-form hidden">
-          <label>ชื่อ-นามสกุล<input id="register-name" type="text" placeholder="ชื่อของคุณ" required></label>
-          <label>อีเมล<input id="register-email" type="email" placeholder="you@example.com" required></label>
-          <label>รหัสผ่าน<input id="register-password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" minlength="6" required></label>
-          <label>บทบาท
-            <select id="register-role">
-              <option value="customer">ลูกค้า</option>
-              <option value="mechanic">ช่าง</option>
-            </select>
-          </label>
-          <button class="btn btn-primary btn-full" type="submit"><i class="fa-solid fa-user-plus"></i> สร้างบัญชี</button>
-        </form>
+       <form id="register-form" class="auth-form hidden">
+  <label>
+    ชื่อ-นามสกุล
+    <input
+      id="register-name"
+      type="text"
+      placeholder="ชื่อของคุณ"
+      required
+    >
+  </label>
+
+  <label>
+    อีเมล
+    <input
+      id="register-email"
+      type="email"
+      placeholder="you@example.com"
+      required
+    >
+  </label>
+
+  <label>
+    รหัสผ่าน
+    <input
+      id="register-password"
+      type="password"
+      placeholder="อย่างน้อย 6 ตัวอักษร"
+      minlength="6"
+      required
+    >
+  </label>
+
+  <button class="btn btn-primary btn-full" type="submit">
+    <i class="fa-solid fa-user-plus"></i>
+    สร้างบัญชี
+  </button>
+</form>
       </div>
     </div>
   </div>
