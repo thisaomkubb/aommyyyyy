@@ -59,3 +59,14 @@ input:focus,select:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(25
 @media(max-width:1100px){.auth-bento{grid-template-columns:1fr}.auth-copy{padding:36px}.bento-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bento-card.wide{grid-column:span 2}.cards-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.calc-layout{grid-template-columns:1fr}.calc-nav{position:relative;top:auto;display:flex;overflow-x:auto}.calc-nav-btn{min-width:180px}.calc-grid{grid-template-columns:1fr}}
 @media(max-width:900px){.sidebar{position:fixed;z-index:50;left:-280px;transition:.2s}.sidebar.open{left:0}.mobile-menu{display:inline-block}.topbar{padding:16px 18px}.content-wrap{padding:18px}.table-card{overflow:auto}.table-head,.table-row{min-width:800px}.toast{left:16px;right:16px}}
 @media(max-width:650px){.auth-screen{padding:14px}.auth-copy h1{font-size:40px}.auth-copy{padding:28px;border-radius:24px}.auth-card{border-radius:24px}.auth-brand{padding:4px}.bento-grid,.cards-grid{grid-template-columns:1fr}.bento-card.wide,.bento-card.tall{grid-column:span 1;grid-row:auto}.form-grid,.two-col,.detail-grid{grid-template-columns:1fr}.top-user .role-badge{display:none}.calc-nav{padding:6px}.calc-nav-btn{min-width:155px;font-size:11px}.calc-header h3{font-size:22px}.result-card>strong.huge{font-size:50px}.action-cluster{flex-wrap:wrap}.row-between{align-items:flex-start;flex-direction:column}}
+.booking-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:8px;
+  flex-wrap:wrap;
+}
+
+.booking-actions .btn{
+  white-space:nowrap;
+}
