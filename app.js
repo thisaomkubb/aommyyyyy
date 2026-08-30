@@ -301,32 +301,448 @@ async function renderMotorcycles(view) {
 }
 
 async function renderBooking(view) {
-  const bikes = await fetchCollection("motorcycles",[["customerId","==",state.user.uid]]);
-  const bookings = await fetchCollection("bookings",[["customerId","==",state.user.uid]]);
-  view.innerHTML = `<div class="bento-grid">
-    <div class="bento-card wide"><div class="card-head"><div><span class="eyebrow">NEW BOOKING</span><h3>สร้างนัดหมาย</h3></div></div>
-      <form id="booking-form" class="form-grid">
-        <label>รถ<select id="booking-bike" required>${bikes.map(b=>`<option value="${b.id}">${escapeHtml(b.brand)} ${escapeHtml(b.model)} — ${escapeHtml(b.plate||"-")}</option>`).join("")}</select></label>
-        <label>วันที่<input id="booking-date" type="date" required></label>
-        <label>เวลา<input id="booking-time" type="time" required></label>
-        <label>บริการ<select id="booking-service"><option>เช็กระยะ</option><option>เปลี่ยนน้ำมันเครื่อง</option><option>ระบบเบรก</option><option>ระบบไฟ</option><option>เครื่องยนต์</option><option>อื่น ๆ</option></select></label>
-        <label class="full">รายละเอียดอาการ / สิ่งที่ต้องการ<input id="booking-note" placeholder="เช่น มีเสียงดังตอนเร่ง"></label>
-        <button class="btn btn-primary full" type="submit"><i class="fa-solid fa-calendar-check"></i> ยืนยันนัดหมาย</button>
-      </form>
-    </div>
-    <div class="bento-card"><span class="eyebrow">BOOKING STATUS</span><h3>นัดหมายล่าสุด</h3>${bookings.slice(0,6).map(b=>`<div class="list-row compact"><div class="row-main"><strong>${escapeHtml(b.date||"-")} ${escapeHtml(b.time||"")}</strong><span>${escapeHtml(b.service||"-")}</span></div>${statusPill(b.status||"รอดำเนินการ")}</div>`).join("")||emptyInline("ยังไม่มีนัดหมาย")}</div>
-  </div>`;
-  $("#booking-form")?.addEventListener("submit", async e=>{
-    e.preventDefault();
-    if(!bikes.length) return toast("กรุณาเพิ่มรถก่อนจองคิว","error");
-    const bike=bikes.find(x=>x.id===$("#booking-bike").value);
-    await addDoc(collection(db,"bookings"),{
-      customerId:state.user.uid, motorcycleId:bike.id, motorcycleModel:`${bike.brand} ${bike.model}`,
-      date:$("#booking-date").value,time:$("#booking-time").value,service:$("#booking-service").value,note:$("#booking-note").value,
-      status:"รอดำเนินการ",createdAt:serverTimestamp()
+
+  const role = state.profile.role;
+
+  // ==============================
+  // ลูกค้า
+  // ==============================
+  if (role === "customer") {
+
+    const bikes = await fetchCollection(
+      "motorcycles",
+      [["customerId", "==", state.user.uid]]
+    );
+
+    const bookings = await fetchCollection(
+      "bookings",
+      [["customerId", "==", state.user.uid]]
+    );
+
+    view.innerHTML = `
+      <div class="bento-grid">
+
+        <div class="bento-card wide">
+          <div class="card-head">
+            <div>
+              <span class="eyebrow">NEW BOOKING</span>
+              <h3>สร้างนัดหมาย</h3>
+            </div>
+          </div>
+
+          <form id="booking-form" class="form-grid">
+
+            <label>
+              รถ
+              <select id="booking-bike" required>
+                ${bikes.map(b => `
+                  <option value="${b.id}">
+                    ${escapeHtml(b.brand)}
+                    ${escapeHtml(b.model)}
+                    — ${escapeHtml(b.plate || "-")}
+                  </option>
+                `).join("")}
+              </select>
+            </label>
+
+            <label>
+              วันที่
+              <input id="booking-date" type="date" required>
+            </label>
+
+            <label>
+              เวลา
+              <input id="booking-time" type="time" required>
+            </label>
+
+            <label>
+              บริการ
+              <select id="booking-service">
+                <option>เช็กระยะ</option>
+                <option>เปลี่ยนน้ำมันเครื่อง</option>
+                <option>ระบบเบรก</option>
+                <option>ระบบไฟ</option>
+                <option>เครื่องยนต์</option>
+                <option>อื่น ๆ</option>
+              </select>
+            </label>
+
+            <label class="full">
+              รายละเอียดอาการ / สิ่งที่ต้องการ
+              <input
+                id="booking-note"
+                placeholder="เช่น มีเสียงดังตอนเร่ง"
+              >
+            </label>
+
+            <button
+              class="btn btn-primary full"
+              type="submit"
+            >
+              <i class="fa-solid fa-calendar-check"></i>
+              ยืนยันนัดหมาย
+            </button>
+
+          </form>
+        </div>
+
+        <div class="bento-card">
+          <span class="eyebrow">BOOKING STATUS</span>
+          <h3>นัดหมายล่าสุด</h3>
+
+          ${
+            bookings.map(b => `
+              <div class="list-row compact">
+
+                <div class="row-main">
+
+                  <strong>
+                    ${escapeHtml(b.date || "-")}
+                    ${escapeHtml(b.time || "")}
+                  </strong>
+
+                  <span>
+                    ${escapeHtml(b.service || "-")}
+                  </span>
+
+                </div>
+
+                ${statusPill(b.status || "รอดำเนินการ")}
+
+              </div>
+            `).join("")
+            || emptyInline("ยังไม่มีนัดหมาย")
+          }
+
+        </div>
+
+      </div>
+    `;
+
+    $("#booking-form")?.addEventListener("submit", async e => {
+
+      e.preventDefault();
+
+      if (!bikes.length) {
+        return toast(
+          "กรุณาเพิ่มรถก่อนจองคิว",
+          "error"
+        );
+      }
+
+      const bike = bikes.find(
+        x => x.id === $("#booking-bike").value
+      );
+
+      await addDoc(
+        collection(db, "bookings"),
+        {
+          customerId: state.user.uid,
+
+          motorcycleId: bike.id,
+
+          motorcycleModel:
+            `${bike.brand} ${bike.model}`,
+
+          plate: bike.plate || "",
+
+          date: $("#booking-date").value,
+
+          time: $("#booking-time").value,
+
+          service: $("#booking-service").value,
+
+          note: $("#booking-note").value,
+
+          status: "รอดำเนินการ",
+
+          createdAt: serverTimestamp()
+        }
+      );
+
+      toast(
+        "สร้างนัดหมายแล้ว",
+        "success"
+      );
+
+      route("booking");
     });
-    toast("สร้างนัดหมายแล้ว","success"); route("booking");
-  });
+
+    return;
+  }
+
+
+  // ==============================
+  // ช่าง
+  // ==============================
+  if (role === "mechanic") {
+
+    // ช่างต้องเห็น Booking ของลูกค้าทั้งหมด
+    const bookings = await fetchCollection("bookings");
+
+    view.innerHTML = `
+      <div class="bento-grid">
+
+        <div class="bento-card wide">
+
+          <div class="card-head">
+
+            <div>
+              <span class="eyebrow">
+                CUSTOMER BOOKINGS
+              </span>
+
+              <h3>
+                นัดหมายจากลูกค้า
+              </h3>
+            </div>
+
+            <span class="status info">
+              ${bookings.length} รายการ
+            </span>
+
+          </div>
+
+          ${
+            bookings.map(b => `
+              <div class="list-row">
+
+                <div class="row-icon">
+                  <i class="fa-solid fa-calendar-check"></i>
+                </div>
+
+                <div class="row-main">
+
+                  <strong>
+                    ${escapeHtml(
+                      b.motorcycleModel || "รถไม่ระบุ"
+                    )}
+                  </strong>
+
+                  <span>
+                    ${escapeHtml(b.plate || "")}
+                    •
+                    ${escapeHtml(b.date || "-")}
+                    ${escapeHtml(b.time || "")}
+                  </span>
+
+                  <span>
+                    ${escapeHtml(
+                      b.service || "-"
+                    )}
+                    ${b.note
+                      ? ` • ${escapeHtml(b.note)}`
+                      : ""}
+                  </span>
+
+                </div>
+
+                <div class="booking-actions">
+
+                  ${statusPill(
+                    b.status || "รอดำเนินการ"
+                  )}
+
+                  ${
+                    b.status === "รอดำเนินการ"
+                    ? `
+                      <button
+                        class="btn btn-small btn-primary accept-booking"
+                        data-id="${b.id}"
+                      >
+                        <i class="fa-solid fa-check"></i>
+                        รับงาน
+                      </button>
+                    `
+                    : ""
+                  }
+
+                </div>
+
+              </div>
+            `).join("")
+            || emptyInline(
+              "ยังไม่มีลูกค้าจองคิว"
+            )
+          }
+
+        </div>
+
+      </div>
+    `;
+
+
+    // ==============================
+    // ปุ่มรับงาน
+    // ==============================
+    $$(".accept-booking").forEach(btn => {
+
+      btn.addEventListener("click", async () => {
+
+        const booking = bookings.find(
+          b => b.id === btn.dataset.id
+        );
+
+        if (!booking) return;
+
+        try {
+
+          // 1. สร้าง Repair Job
+          await addDoc(
+            collection(db, "repairs"),
+            {
+              bookingId: booking.id,
+
+              customerId:
+                booking.customerId,
+
+              motorcycleId:
+                booking.motorcycleId || "",
+
+              motorcycleModel:
+                booking.motorcycleModel || "ไม่ระบุ",
+
+              plate:
+                booking.plate || "",
+
+              mechanicId:
+                state.user.uid,
+
+              mechanicName:
+                state.profile.name || "ช่าง",
+
+              problem:
+                booking.note || booking.service || "",
+
+              service:
+                booking.service || "",
+
+              status:
+                "รอตรวจ",
+
+              laborCost: 0,
+
+              totalCost: 0,
+
+              createdAt:
+                serverTimestamp()
+            }
+          );
+
+
+          // 2. เปลี่ยนสถานะ Booking
+          await updateDoc(
+            doc(db, "bookings", booking.id),
+            {
+              status: "รับงานแล้ว",
+
+              mechanicId:
+                state.user.uid,
+
+              mechanicName:
+                state.profile.name || "ช่าง",
+
+              acceptedAt:
+                serverTimestamp()
+            }
+          );
+
+
+          toast(
+            "รับงานเรียบร้อยแล้ว",
+            "success"
+          );
+
+          route("booking");
+
+        } catch (err) {
+
+          console.error(err);
+
+          toast(
+            "รับงานไม่สำเร็จ: " + err.message,
+            "error"
+          );
+
+        }
+
+      });
+
+    });
+
+    return;
+  }
+
+
+  // ==============================
+  // Owner
+  // ==============================
+  if (role === "owner") {
+
+    const bookings =
+      await fetchCollection("bookings");
+
+    view.innerHTML = `
+      <div class="bento-grid">
+
+        <div class="bento-card wide">
+
+          <span class="eyebrow">
+            BOOKING MANAGEMENT
+          </span>
+
+          <h3>
+            นัดหมายทั้งหมด
+          </h3>
+
+          ${
+            bookings.map(b => `
+              <div class="list-row">
+
+                <div class="row-icon">
+                  <i class="fa-solid fa-calendar-days"></i>
+                </div>
+
+                <div class="row-main">
+
+                  <strong>
+                    ${escapeHtml(
+                      b.motorcycleModel || "รถไม่ระบุ"
+                    )}
+                  </strong>
+
+                  <span>
+                    ${escapeHtml(b.date || "-")}
+                    ${escapeHtml(b.time || "")}
+                  </span>
+
+                  <span>
+                    ${escapeHtml(
+                      b.service || "-"
+                    )}
+                  </span>
+
+                </div>
+
+                ${statusPill(
+                  b.status || "รอดำเนินการ"
+                )}
+
+              </div>
+            `).join("")
+            || emptyInline(
+              "ยังไม่มีนัดหมาย"
+            )
+          }
+
+        </div>
+
+      </div>
+    `;
+
+    return;
+  }
+
 }
 
 async function renderJobs(view) {
