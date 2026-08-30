@@ -1,128 +1,107 @@
-*{box-sizing:border-box}
-:root{
-  --bg:#f5f6f8;
-  --panel:#ffffff;
-  --panel2:#f0f2f5;
-  --panel3:#e7eaee;
-  --line:#d9dee5;
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Thisaomkubb Motorcycle Workshop</title>
+  <meta name="theme-color" content="#0b0d10" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="toast-root"></div>
 
-  --text:#15181d;
-  --muted:#69727e;
+  <div id="auth-screen" class="auth-screen">
+    <div class="auth-bento">
+      <div class="auth-brand">
+        <div class="brand-mark"><i class="fa-solid fa-motorcycle"></i></div>
+        <div>
+          <div class="brand-name">Thisaomkubb</div>
+          <div class="brand-sub">MOTORCYCLE WORKSHOP</div>
+        </div>
+      </div>
 
-  --orange:#ff6b00;
-  --blue:#2788e8;
-  --green:#18a96b;
-  --red:#e14b61;
+      <div class="auth-copy">
+        <span class="eyebrow">Thisaomkubb Motorcycle Workshop </span>
+        <h1>ดูแลรถทั้งคัน<br><span>อยู่ในที่เดียว</span></h1>
+        <p>รับซ่อมบำรุงและปรับแต่งมอเตอร์ไซค์ ทุกรุ่น/ทุกยี่ห้อ </p>
+        <div class="feature-pills">
+          <span><i class="fa-solid "></i> ซ่อมบำรุง</span>
+          <span><i class="fa-solid "></i> ผ่าเครื่อง</span>
+          <span><i class="fa-solid "></i> ตรวจเช็ครอบคัน</span>
+        </div>
+      </div>
 
-  --purple:#7b61d1;
-  --yellow:#d89a00;
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-auth-tab="login">เข้าสู่ระบบ</button>
+          <button class="auth-tab" data-auth-tab="register">สมัครสมาชิก</button>
+        </div>
 
-  --shadow:0 12px 35px rgba(20,30,40,.08);
-  --radius:24px;
-}
-html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font-family:'Kanit',sans-serif}
-button,input,select{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
-.auth-screen{min-height:100vh;padding:32px;display:grid;place-items:center;background:radial-gradient(circle at 20% 10%,rgba(255,122,0,.12),transparent 30%),radial-gradient(circle at 90% 90%,rgba(77,163,255,.08),transparent 28%),var(--bg)}
-.auth-bento{max-width:1120px;width:100%;display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
-.auth-brand{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding:10px}
-.brand-mark{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(145deg,#ff8a1f,#dc4f00);color:#111;font-size:24px;box-shadow:0 12px 30px rgba(255,122,0,.24)}
-.brand-mark.small{width:42px;height:42px;border-radius:14px;font-size:17px}
-.brand-name{font:700 21px/'Space Grotesk',sans-serif;letter-spacing:.08em}
-.brand-sub{font-size:10px;color:var(--muted);letter-spacing:.2em}
-.auth-copy,.auth-card{background:var(--panel);border:1px solid var(--line);border-radius:32px;box-shadow:var(--shadow)}
-.auth-copy{
-  padding:54px;
-  background:#ffffff;
-  position:relative;
-  overflow:hidden;
-}
-.auth-copy:after{content:"";position:absolute;width:280px;height:280px;border-radius:50%;right:-90px;bottom:-120px;background:rgba(255,122,0,.08)}
-.eyebrow{display:block;color:var(--orange);font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase}
-.auth-copy h1{font-size:56px;line-height:1.02;margin:18px 0 20px}
-.auth-copy h1 span{color:var(--orange)}
-.auth-copy p{max-width:560px;color:var(--muted);font-size:17px;line-height:1.8}
-.feature-pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:26px}.feature-pills span{border:1px solid var(--line);background:var(--panel2);padding:8px 12px;border-radius:999px;color:#cfd5db;font-size:12px}
-.auth-card{padding:24px;align-self:stretch}
-.auth-tabs{display:grid;grid-template-columns:1fr 1fr;background:var(--panel2);padding:4px;border-radius:15px;margin-bottom:22px}
-.auth-tab{border:0;background:transparent;color:var(--muted);padding:11px;border-radius:11px}.auth-tab.active{background:var(--panel3);color:#fff}
-.auth-form{display:grid;gap:15px}.auth-form label,.input-card label,.form-grid label{display:grid;gap:7px;color:#cbd1d7;font-size:12px}
-input,
-select{
-  width:100%;
-  border:1px solid var(--line);
-  background:#ffffff;
-  color:#15181d;
-  border-radius:14px;
-  padding:12px 14px;
-  outline:0
-}
-border-radius:14px;padding:12px 14px;outline:0}
-input:focus,select:focus{border-color:var(--orange);box-shadow:0 0 0 3px rgba(255,122,0,.1)}
-.btn{border:0;border-radius:14px;padding:11px 15px;font-weight:600;transition:.18s transform,.18s filter}.btn:hover{transform:translateY(-1px);filter:brightness(1.08)}
-.btn-primary{background:linear-gradient(135deg,#ff8a1f,#ff6500);color:#141414;box-shadow:0 10px 24px rgba(255,122,0,.2)}.btn-ghost{background:var(--panel3);color:#fff;border:1px solid var(--line)}.btn-small{padding:8px 12px;font-size:12px}.btn-full{width:100%}
-.demo-note{font-size:11px;color:#68717c;line-height:1.6}
+        <form id="login-form" class="auth-form">
+          <label>อีเมล<input id="login-email" type="email" placeholder="you@example.com" required></label>
+          <label>รหัสผ่าน<input id="login-password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" required></label>
+          <button class="btn btn-primary btn-full" type="submit"><i class="fa-solid fa-arrow-right-to-bracket"></i> เข้าสู่ระบบ</button>
+        </form>
 
-.app-shell{min-height:100vh;display:flex}
-.sidebar{width:260px;background:#ffffff;border-right:1px solid var(--line);padding:18px;display:flex;flex-direction:column;justify-content:space-between;position:sticky;top:0;height:100vh}
-.brand-row{display:flex;align-items:center;gap:10px;padding:8px 6px 24px}
-.main-nav,.sidebar-bottom{display:grid;gap:7px}.nav-item{
-  width:100%;
-  display:flex;
-  align-items:center;
-  gap:12px;
-  padding:12px 13px;
-  border:0;
-  border-radius:15px;
-  background:transparent;
-  color:#5f6874;
-  text-align:left
-}
-.nav-item:hover,
-.nav-item.active{
-  background:#fff1e6;
-  color:#17191d
-}
-.nav-item.active i{color:var(--orange)}.nav-item i{width:18px;text-align:center}.nav-item.logout{border-top:1px solid var(--line);margin-top:6px;padding-top:16px;color:#7a838e}
-.main-area{flex:1;min-width:0}
-.topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:22px 30px;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid rgba(43,51,60,.65)}
-.topbar h2{margin:2px 0 0;font:700 24px/'Space Grotesk',sans-serif}.top-user{display:flex;align-items:center;gap:10px}.role-badge{background:var(--panel2);border:1px solid var(--line);color:#cbd2d9;padding:7px 10px;border-radius:999px;font-size:11px}.avatar{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#2f3a44,#14181d);border:1px solid var(--line);font-weight:700}.avatar.big{width:76px;height:76px;font-size:28px}.mobile-menu{display:none;background:transparent;color:#fff;border:0;margin-right:8px}
-.content-wrap{padding:28px 30px 50px;max-width:1500px;margin:auto}
-.bento-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px}.dashboard-grid{grid-auto-flow:dense}
-.bento-card{
-  background:#ffffff;
-  border:1px solid var(--line);
-  border-radius:var(--radius);
-  padding:22px;
-  box-shadow:0 12px 30px rgba(20,30,40,.06);
-  min-width:0
-}
-border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:0 16px 40px rgba(0,0,0,.18);min-width:0}.bento-card.wide{grid-column:span 3}.bento-card.tall{grid-row:span 2}
-.metric{display:flex;gap:15px;align-items:center;min-height:128px}.metric-icon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;background:#1c2026}.metric strong{display:block;font:700 30px/'Space Grotesk',sans-serif;margin-top:3px}.metric span{font-size:12px;color:var(--muted)}.metric.orange .metric-icon{color:var(--orange);background:rgba(255,122,0,.1)}.metric.blue .metric-icon{color:var(--blue);background:rgba(77,163,255,.1)}.metric.green .metric-icon{color:var(--green);background:rgba(57,217,138,.1)}.metric.red .metric-icon{color:var(--red);background:rgba(255,93,115,.1)}.metric.purple .metric-icon{color:var(--purple);background:rgba(155,124,255,.1)}
-.card-head,.page-actions,.row-between{display:flex;justify-content:space-between;align-items:center;gap:15px}.card-head h3{margin:4px 0 0;font-size:18px}.icon-btn{width:36px;height:36px;border:1px solid var(--line);background:var(--panel3);color:#fff;border-radius:11px}.list-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(43,51,60,.7)}.list-row:last-child{border-bottom:0}.list-row.compact{padding:10px 0}.row-icon,.bike-photo,.part-icon{width:38px;height:38px;border-radius:12px;background:#1d232a;display:grid;place-items:center;color:var(--blue);flex:none}.row-icon.purple{color:var(--purple)}.row-main{flex:1;min-width:0}.row-main strong,.row-main span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.row-main strong{font-size:14px}.row-main span{font-size:11px;color:var(--muted);margin-top:2px}.muted{color:var(--muted);font-size:12px}.status{white-space:nowrap;padding:5px 9px;border-radius:999px;background:var(--panel3);font-size:10px}.status.success{color:var(--green)}.status.warn{color:var(--yellow)}.status.info{color:var(--blue)}.status.danger{color:var(--red)}.stock-row,.spec-line,.bar-row{display:grid;grid-template-columns:1fr auto;gap:15px;padding:12px 0;border-bottom:1px solid rgba(43,51,60,.65);font-size:12px}.stock-row:last-child,.spec-line:last-child{border-bottom:0}.stock-row b{color:var(--orange)}
-.accent-card{background:linear-gradient(145deg,rgba(255,122,0,.18),rgba(255,122,0,.05));display:flex;flex-direction:column;align-items:flex-start;justify-content:center}.accent-card>i{font-size:28px;color:var(--orange);margin-bottom:15px}.accent-card p{color:#c6cdd4;line-height:1.7}.accent-card .btn{margin-top:10px}
-.page-actions{margin-bottom:15px}.cards-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.bike-card h3,.part-card h3{margin:6px 0 16px;font-size:23px}.bike-hero{height:155px;border-radius:18px;background:radial-gradient(circle at 50% 35%,rgba(255,122,0,.18),transparent 45%),#0d1115;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:18px}.bike-hero i{font-size:78px;color:#fff}.bike-hero span{position:absolute;top:12px;right:12px;color:var(--muted);font-size:11px}.part-icon{width:54px;height:54px;color:var(--orange);font-size:21px;margin-bottom:13px}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.form-grid .full{grid-column:1/-1}.input-note{font-size:11px;color:var(--muted);padding:10px 12px;border:1px dashed var(--line);border-radius:12px;line-height:1.6}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.table-card{background:var(--panel);border:1px solid var(--line);border-radius:24px;overflow:hidden}.table-head,.table-row{display:grid;grid-template-columns:1.25fr 1.4fr 1fr .9fr .8fr;gap:12px;padding:14px 18px;align-items:center}.table-head{color:#7f8995;font-size:11px;background:var(--panel2);text-transform:uppercase;letter-spacing:.08em}.table-row{border-top:1px solid rgba(43,51,60,.7);font-size:12px;cursor:pointer}.table-row:hover{background:rgba(255,255,255,.025)}.table-row small{display:block;color:#6e7782;margin-top:2px}
-.chart-card{min-height:330px}.bar-row{grid-template-columns:120px 1fr 30px;align-items:center}.bar-row>div{height:8px;border-radius:99px;background:#0d1115;overflow:hidden}.bar-row i{display:block;height:100%;background:linear-gradient(90deg,var(--orange),#ffb347);border-radius:99px}.empty-inline{padding:30px 0;color:#6f7883;font-size:12px;display:flex;align-items:center;gap:10px}.empty-state{display:grid;place-items:center;text-align:center;padding:80px 20px;grid-column:1/-1;color:var(--muted)}.empty-state i{font-size:46px;color:#3b434c;margin-bottom:10px}.empty-state h3{color:#dce1e6;margin:0 0 4px}.empty-state p{margin:0}
-.profile-card{display:flex;gap:20px;align-items:center}.danger-text{color:var(--red)!important}.success-text{color:var(--green)!important}.warn-text{color:var(--yellow)!important}.info-text{color:var(--blue)!important}
-.loading{min-height:300px;display:grid;place-items:center;color:var(--muted);gap:12px}.spinner{width:30px;height:30px;border:3px solid #27303a;border-top-color:var(--orange);border-radius:50%;animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
-.toast{position:fixed;right:20px;bottom:20px;z-index:100;display:flex;align-items:center;gap:10px;max-width:360px;padding:14px 16px;border-radius:16px;background:#181d24;border:1px solid var(--line);box-shadow:var(--shadow);font-size:13px;animation:toastIn .25s ease}.toast.success{border-color:rgba(57,217,138,.35)}.toast.error{border-color:rgba(255,93,115,.35)}.toast i{color:var(--orange)}@keyframes toastIn{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
-.modal-backdrop{position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:18px}.modal{width:min(650px,100%);max-height:92vh;overflow:auto;position:relative;background:#11151a;border:1px solid var(--line);border-radius:26px;padding:24px;box-shadow:var(--shadow)}.modal h3{font-size:25px;margin:6px 0 22px}.modal-close{position:absolute;right:18px;top:14px;border:0;background:transparent;color:#7f8994;font-size:28px}.modal-actions{display:flex;gap:10px;margin-top:20px}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.detail-grid>div{padding:14px;border:1px solid var(--line);border-radius:15px;background:var(--panel2)}.detail-grid span,.detail-grid b{display:block}.detail-grid span{font-size:11px;color:var(--muted);margin-bottom:5px}
-.calc-layout{display:grid;grid-template-columns:245px 1fr;gap:15px}.calc-nav{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:10px;height:max-content;position:sticky;top:95px}.calc-nav-btn{width:100%;border:0;background:transparent;color:#8e98a4;padding:12px;border-radius:14px;display:grid;grid-template-columns:35px 1fr;text-align:left;align-items:center;gap:8px;font-size:12px}.calc-nav-btn span{color:#545d67;font:600 12px/'Space Grotesk',sans-serif}.calc-nav-btn.active,.calc-nav-btn:hover{background:var(--panel3);color:#fff}.calc-nav-btn.active span{color:var(--orange)}.calc-workspace{min-width:0}.calc-panel{display:none}.calc-panel.active{display:block}.calc-header{margin-bottom:17px}.calc-header h3{font-size:27px;margin:3px 0}.calc-header p{margin:0;color:var(--muted);font-size:12px}.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.input-card,.result-card,.inner-info{background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:24px}.input-card{display:grid;gap:14px}.result-card{text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:350px}.result-card>span{color:var(--muted);font-size:12px}.result-card>strong{font:700 38px/'Space Grotesk',sans-serif;margin-top:5px}.result-card>strong.huge{font-size:64px}.result-card small{color:#68717b;font-size:11px}.result-divider{width:100%;height:1px;background:var(--line);margin:24px 0}.result-card.orange{background:linear-gradient(145deg,rgba(255,122,0,.14),var(--panel))}.result-card.blue{background:linear-gradient(145deg,rgba(77,163,255,.14),var(--panel))}.result-card.green{background:linear-gradient(145deg,rgba(57,217,138,.13),var(--panel))}.result-card.red{background:linear-gradient(145deg,rgba(255,93,115,.13),var(--panel))}.result-card.purple{background:linear-gradient(145deg,rgba(155,124,255,.13),var(--panel))}.result-card.slate{background:linear-gradient(145deg,rgba(177,189,202,.12),var(--panel))}.calc-status{margin-top:18px;padding:9px 12px;border:1px solid currentColor;border-radius:12px;font-size:11px}.mini-status{margin-top:6px;font-size:11px}.result-stack{display:grid;gap:15px}.result-stack .result-card{min-height:168px}.inner-info{display:flex;flex-direction:column;justify-content:center}.inner-info p{line-height:1.8;color:#d4d9df}.action-cluster{display:flex;gap:9px}
-.build-sheet{width:min(470px,100%);margin:0 auto;padding:22px;background:linear-gradient(180deg,#171b21,#0e1013);border:1px solid #343c46;border-radius:20px}.build-brand{display:flex;align-items:center;gap:10px;padding-bottom:18px;border-bottom:1px solid #323943;margin-bottom:12px}.build-brand strong,.build-brand span{display:block}.build-brand strong{font:700 15px/'Space Grotesk',sans-serif;letter-spacing:.08em}.build-brand span{font-size:9px;color:var(--orange);letter-spacing:.15em}.sheet-section{padding:12px 13px;border-left:3px solid var(--orange);background:rgba(255,255,255,.025);border-radius:10px;margin:8px 0}.sheet-section>b{font:600 9px/'Space Grotesk',sans-serif;color:var(--orange);letter-spacing:.1em;display:block;margin-bottom:6px}.sheet-section div{display:flex;justify-content:space-between;gap:10px;font-size:10px;padding:3px 0}.sheet-section div span{color:#858e99}.sheet-footer{margin-top:18px;border-top:1px solid #2f363f;padding-top:10px;text-align:center;color:#65707c;font-size:9px;letter-spacing:.1em}
-@media(max-width:1100px){.auth-bento{grid-template-columns:1fr}.auth-copy{padding:36px}.bento-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bento-card.wide{grid-column:span 2}.cards-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.calc-layout{grid-template-columns:1fr}.calc-nav{position:relative;top:auto;display:flex;overflow-x:auto}.calc-nav-btn{min-width:180px}.calc-grid{grid-template-columns:1fr}}
-@media(max-width:900px){.sidebar{position:fixed;z-index:50;left:-280px;transition:.2s}.sidebar.open{left:0}.mobile-menu{display:inline-block}.topbar{padding:16px 18px}.content-wrap{padding:18px}.table-card{overflow:auto}.table-head,.table-row{min-width:800px}.toast{left:16px;right:16px}}
-@media(max-width:650px){.auth-screen{padding:14px}.auth-copy h1{font-size:40px}.auth-copy{padding:28px;border-radius:24px}.auth-card{border-radius:24px}.auth-brand{padding:4px}.bento-grid,.cards-grid{grid-template-columns:1fr}.bento-card.wide,.bento-card.tall{grid-column:span 1;grid-row:auto}.form-grid,.two-col,.detail-grid{grid-template-columns:1fr}.top-user .role-badge{display:none}.calc-nav{padding:6px}.calc-nav-btn{min-width:155px;font-size:11px}.calc-header h3{font-size:22px}.result-card>strong.huge{font-size:50px}.action-cluster{flex-wrap:wrap}.row-between{align-items:flex-start;flex-direction:column}}
-.booking-actions{
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:8px;
-  flex-wrap:wrap;
-}
+        <form id="register-form" class="auth-form hidden">
+          <label>ชื่อ-นามสกุล<input id="register-name" type="text" placeholder="ชื่อของคุณ" required></label>
+          <label>อีเมล<input id="register-email" type="email" placeholder="you@example.com" required></label>
+          <label>รหัสผ่าน<input id="register-password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" minlength="6" required></label>
+          <label>บทบาท
+            <select id="register-role">
+              <option value="customer">ลูกค้า</option>
+              <option value="mechanic">ช่าง</option>
+            </select>
+          </label>
+          <button class="btn btn-primary btn-full" type="submit"><i class="fa-solid fa-user-plus"></i> สร้างบัญชี</button>
+        </form>
+      </div>
+    </div>
+  </div>
 
-.booking-actions .btn{
-  white-space:nowrap;
-}
+  <div id="app-screen" class="app-shell hidden">
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <div class="brand-row">
+          <div class="brand-mark small"><i class="fa-solid fa-motorcycle"></i></div>
+          <div>
+            <div class="brand-name">Thisaomkubb</div>
+            <div class="brand-sub">Motorcycle Workshop</div>
+          </div>
+        </div>
+
+        <nav id="main-nav" class="main-nav"></nav>
+      </div>
+      <div class="sidebar-bottom">
+        <button class="nav-item" data-action="calculator"><i class="fa-solid fa-gauge-high"></i><span>Engine Lab</span></button>
+        <button class="nav-item" data-action="profile"><i class="fa-solid fa-user-gear"></i><span>โปรไฟล์</span></button>
+        <button class="nav-item logout" data-action="logout"><i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span></button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div>
+          <button class="mobile-menu" id="mobile-menu"><i class="fa-solid fa-bars"></i></button>
+          <div id="page-kicker" class="eyebrow">DASHBOARD</div>
+          <h2 id="page-title">ภาพรวมร้าน</h2>
+        </div>
+        <div class="top-user">
+          <div id="role-badge" class="role-badge">CUSTOMER</div>
+          <div class="avatar" id="avatar">A</div>
+        </div>
+      </header>
+
+      <section id="view-root" class="content-wrap"></section>
+    </main>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
