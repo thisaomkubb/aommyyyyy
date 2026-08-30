@@ -804,13 +804,24 @@ async function openJobDetail(job) {
 }
 
 async function renderHistory(view) {
-  const calcs=await fetchCollection("engineCalculations",[["userId","==",state.user.uid]]);
-  const repairs=await fetchCollection("repairs",[["customerId","==",state.user.uid]]);
-  view.innerHTML=`<div class="bento-grid">
-    <div class="bento-card wide"><div class="card-head"><div><span class="eyebrow">ENGINE CALCULATIONS</span><h3>ประวัติ Engine Lab</h3></div></div>
-    ${calcs.map(c=>`<div class="list-row"><div class="row-icon purple"><i class="fa-solid fa-gauge-high"></i></div><div class="row-main"><strong>${escapeHtml(c.label||"Engine Build")}</strong><span>${Number(c.cc||0).toFixed(0)} CC • CR ${escapeHtml(c.cr||"-")} • ${Number(c.rpm||0).toLocaleString()} RPM</span></div><span class="muted">${escapeHtml(c.createdAtText||"")}</span></div>`).join("")||emptyInline("ยังไม่มีแบบคำนวณที่บันทึก")}</div>
-    <div class="bento-card"><div class="card-head"><div><span class="eyebrow">REPAIR HISTORY</span><h3>งานซ่อม</h3></div></div>${repairs.map(j=>jobRow(j)).join("")||emptyInline("ยังไม่มีประวัติงานซ่อม")}</div>
-  </div>`;
+
+  const calcs = await fetchCollection(
+    "engineCalculations",
+    [["userId", "==", state.user.uid]]
+  );
+
+  const repairs =
+    state.profile.role === "mechanic"
+      ? await fetchCollection(
+          "repairs",
+          [["mechanicId", "==", state.user.uid]]
+        )
+      : await fetchCollection(
+          "repairs",
+          [["customerId", "==", state.user.uid]]
+        );
+
+  view.innerHTML = `...`;
 }
 
 async function renderCustomers(view) {
