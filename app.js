@@ -1,11 +1,25 @@
 import { auth, db, firebaseConfigured } from "./firebase.js";
 import {
-  createUserWithEmailAndPassword, signInWithEmailAndPassword,
-  onAuthStateChanged, signOut, updateProfile
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
 import {
-  collection, addDoc, doc, getDoc, setDoc, query, where, orderBy,
-  getDocs, limit, serverTimestamp, deleteDoc, updateDoc
+  collection,
+  addDoc,
+  doc,
+  getDoc,
+  setDoc,
+  query,
+  where,
+  orderBy,
+  getDocs,
+  limit,
+  serverTimestamp,
+  deleteDoc,
+  updateDoc
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const $ = (s) => document.querySelector(s);
