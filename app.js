@@ -782,27 +782,283 @@ async function renderJobs(view) {
 }
 
 async function openJobDetail(job) {
-  if(!job) return;
-  const isStaff=["owner","mechanic"].includes(state.profile.role);
-  const modal=document.createElement("div");
-  modal.className="modal-backdrop";
-  modal.innerHTML=`<div class="modal"><button class="modal-close">×</button><span class="eyebrow">WORK ORDER</span><h3>${escapeHtml(job.motorcycleModel||"งานซ่อม")}</h3>
-  <div class="detail-grid">
-    <div><span>อาการ</span><b>${escapeHtml(job.problem||"-")}</b></div>
-    <div><span>ช่าง</span><b>${escapeHtml(job.mechanicName||"-")}</b></div>
-    <div><span>สถานะ</span><b>${statusPill(job.status)}</b></div>
-    <div><span>ค่าใช้จ่าย</span><b>฿${Number(job.totalCost||0).toLocaleString()}</b></div>
-  </div>
-  ${isStaff?`<div class="modal-actions"><select id="edit-status"><option>รอตรวจ</option><option>กำลังซ่อม</option><option>รออนุมัติ</option><option>เสร็จสิ้น</option><option>ยกเลิก</option></select><button class="btn btn-primary" id="save-status">บันทึกสถานะ</button></div>`:""}</div>`;
-  $("#modal-root").appendChild(modal);
-  modal.querySelector(".modal-close").onclick=()=>modal.remove();
-  modal.addEventListener("click",e=>{if(e.target===modal)modal.remove()});
-  modal.querySelector("#save-status")?.addEventListener("click",async()=>{
-    await updateDoc(doc(db,"repairs",job.id),{status:modal.querySelector("#edit-status").value,updatedAt:serverTimestamp()});
-    modal.remove(); toast("อัปเดตสถานะแล้ว","success"); route(state.route);
-  });
-}
+  if (!job) return;
 
+  const role = state.profile.role;
+  const isOwner = role === "owner";
+  const isMechanic = role === "mechanic";
+
+  // งานที่เสร็จสิ้นแล้ว
+  const isCompleted = job.status === "เสร็จสิ้น";
+
+  // ช่างแก้ได้เฉพาะงานที่ยังไม่เสร็จ
+  const canEdit = isOwner || (isMechanic && !isCompleted);
+
+  const modal = document.createElement("div");
+
+  modal.className = "modal-backdrop";
+
+  modal.innerHTML = `
+    <div class="modal">
+
+      <button class="modal-close">×</button>
+
+      <span class="eyebrow">
+        WORK ORDER
+      </span>
+
+      <h3>
+        ${escapeHtml(
+          job.motorcycleModel || "งานซ่อม"
+        )}
+      </h3>
+
+
+      <div class="detail-grid">
+
+        <div>
+          <span>ทะเบียน</span>
+          <b>
+            ${escapeHtml(job.plate || "-")}
+          </b>
+        </div>
+
+
+        <div>
+          <span>อาการ</span>
+          <b>
+            ${escapeHtml(job.problem || "-")}
+          </b>
+        </div>
+
+
+        <div>
+          <span>ช่าง</span>
+          <b>
+            ${escapeHtml(job.mechanicName || "-")}
+          </b>
+        </div>
+
+
+        <div>
+          <span>สถานะปัจจุบัน</span>
+          <b>
+            ${statusPill(job.status)}
+          </b>
+        </div>
+
+      </div>
+
+
+      ${
+        canEdit
+          ? `
+            <div class="job-edit-box">
+
+              <label>
+                สถานะงาน
+
+                <select id="edit-status">
+
+                  <option value="รอตรวจ"
+                    ${job.status === "รอตรวจ" ? "selected" : ""}>
+                    รอตรวจ
+                  </option>
+
+                  <option value="กำลังซ่อม"
+                    ${job.status === "กำลังซ่อม" ? "selected" : ""}>
+                    กำลังซ่อม
+                  </option>
+
+                  <option value="รออนุมัติ"
+                    ${job.status === "รออนุมัติ" ? "selected" : ""}>
+                    รออนุมัติ
+                  </option>
+
+                  <option value="เสร็จสิ้น"
+                    ${job.status === "เสร็จสิ้น" ? "selected" : ""}>
+                    เสร็จสิ้น
+                  </option>
+
+                </select>
+
+              </label>
+
+
+              <label>
+                ค่าใช้จ่ายรวม (บาท)
+
+                <input
+                  id="edit-cost"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value="${Number(job.totalCost || 0)}"
+                  placeholder="0"
+                >
+
+              </label>
+
+
+              ${
+                isOwner
+                  ? `
+                    <div class="edit-note owner-note">
+                      <i class="fa-solid fa-crown"></i>
+                      เจ้าของร้านสามารถแก้ไขงานที่เสร็จสิ้นแล้วได้
+                    </div>
+                  `
+                  : `
+                    <div class="edit-note">
+                      <i class="fa-solid fa-circle-info"></i>
+                      ช่างสามารถแก้ไขงานได้จนกว่าจะบันทึกเป็น "เสร็จสิ้น"
+                    </div>
+                  `
+              }
+
+
+              <div class="modal-actions">
+
+                <button
+                  class="btn btn-primary"
+                  id="save-job"
+                >
+                  <i class="fa-solid fa-floppy-disk"></i>
+                  บันทึกการเปลี่ยนแปลง
+                </button>
+
+              </div>
+
+            </div>
+          `
+          : `
+            <div class="job-locked-box">
+
+              <i class="fa-solid fa-lock"></i>
+
+              <strong>
+                งานนี้ปิดแล้ว
+              </strong>
+
+              <span>
+                งานที่บันทึกเป็น "เสร็จสิ้น"
+                ไม่สามารถแก้ไขโดยช่างได้
+              </span>
+
+              <small>
+                หากต้องการแก้ไข ให้เจ้าของร้านเป็นผู้ดำเนินการ
+              </small>
+
+            </div>
+          `
+      }
+
+
+      <div class="cost-summary">
+
+        <span>
+          ค่าใช้จ่ายปัจจุบัน
+        </span>
+
+        <strong>
+          ฿${Number(job.totalCost || 0).toLocaleString()}
+        </strong>
+
+      </div>
+
+    </div>
+  `;
+
+
+  $("#modal-root").appendChild(modal);
+
+
+  // ปุ่มปิด
+  modal.querySelector(".modal-close").onclick = () => {
+    modal.remove();
+  };
+
+
+  // คลิกพื้นที่ด้านนอกเพื่อปิด
+  modal.addEventListener("click", (e) => {
+
+    if (e.target === modal) {
+      modal.remove();
+    }
+
+  });
+
+
+  // ไม่มีสิทธิ์แก้ไข
+  if (!canEdit) {
+    return;
+  }
+
+
+  // ปุ่มบันทึก
+  modal
+    .querySelector("#save-job")
+    ?.addEventListener("click", async () => {
+
+      try {
+
+        const newStatus =
+          modal.querySelector("#edit-status").value;
+
+        const newCost =
+          Number(
+            modal.querySelector("#edit-cost").value
+          ) || 0;
+
+
+        // ถ้าเป็นช่าง ห้ามแก้งานที่เสร็จสิ้น
+        if (isMechanic && job.status === "เสร็จสิ้น") {
+
+          toast(
+            "งานนี้เสร็จสิ้นแล้ว ต้องให้เจ้าของร้านแก้ไข",
+            "error"
+          );
+
+          modal.remove();
+
+          return;
+        }
+
+
+        await updateDoc(
+          doc(db, "repairs", job.id),
+          {
+            status: newStatus,
+            totalCost: newCost,
+            updatedAt: serverTimestamp(),
+            updatedBy: state.user.uid
+          }
+        );
+
+
+        modal.remove();
+
+        toast(
+          "บันทึกข้อมูลการซ่อมแล้ว",
+          "success"
+        );
+
+
+        route(state.route);
+
+      } catch (err) {
+
+        console.error(err);
+
+        toast(
+          "บันทึกไม่สำเร็จ: " + err.message,
+          "error"
+        );
+
+      }
+
+    });
+}
 async function renderHistory(view) {
 
   const role = state.profile.role;
