@@ -170,10 +170,26 @@ function buildNav() {
 
 $("#main-nav").addEventListener("click", ()=>{ if (window.innerWidth < 900) $(".sidebar").classList.remove("open"); });
 $("#mobile-menu").addEventListener("click", ()=>$(".sidebar").classList.toggle("open"));
-$$("[data-action]").forEach(b=>b.addEventListener("click", async ()=>{
-  const action=b.dataset.action;
-  if(action==="logout") await signOut(auth);
-  else route(action);
+$$("[data-action]").forEach(b => b.addEventListener("click", async () => {
+
+  const action = b.dataset.action;
+
+  // ปิด Sidebar เมื่อกดเมนูด้านล่างบนมือถือ
+  if (window.innerWidth < 900) {
+    $(".sidebar").classList.remove("open");
+  }
+
+  // ออกจากระบบ
+  if (action === "logout") {
+
+    await signOut(auth);
+    return;
+
+  }
+
+  // ไปยังหน้าที่เลือก
+  route(action);
+
 }));
 
 async function route(name) {
