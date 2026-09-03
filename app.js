@@ -1102,6 +1102,24 @@ async function renderDashboard(view) {
     fetchCollection("users", [["role", "==", "customer"]]),
     fetchCollection("repairs")
   ]);
+    jobs.sort((a, b) => {
+
+  const timeA =
+    a.createdAt?.toMillis
+      ? a.createdAt.toMillis()
+      : a.createdAt
+        ? new Date(a.createdAt).getTime()
+        : 0;
+
+  const timeB =
+    b.createdAt?.toMillis
+      ? b.createdAt.toMillis()
+      : b.createdAt
+        ? new Date(b.createdAt).getTime()
+        : 0;
+
+  return timeB - timeA;
+});
 
   const total = jobs.reduce(
     (sum, job) => sum + (Number(job.totalCost) || 0),
@@ -1752,10 +1770,40 @@ async function renderBooking(view) {
 }
 
 async function renderJobs(view) {
-  const role=state.profile.role;
-  const jobs=role==="mechanic" ? await fetchCollection("repairs",[["mechanicId","==",state.user.uid]]) :
-    role==="customer" ? await fetchCollection("repairs",[["customerId","==",state.user.uid]]) :
-    await fetchCollection("repairs");
+  const role = state.profile.role;
+
+  let jobs =
+    role === "mechanic"
+      ? await fetchCollection(
+          "repairs",
+          [["mechanicId", "==", state.user.uid]]
+        )
+      : role === "customer"
+        ? await fetchCollection(
+            "repairs",
+            [["customerId", "==", state.user.uid]]
+          )
+        : await fetchCollection("repairs");
+
+  // เรียงงานซ่อมจาก "เพิ่มล่าสุด → เก่าสุด"
+  jobs.sort((a, b) => {
+
+    const timeA =
+      a.createdAt?.toMillis
+        ? a.createdAt.toMillis()
+        : a.createdAt
+          ? new Date(a.createdAt).getTime()
+          : 0;
+
+    const timeB =
+      b.createdAt?.toMillis
+        ? b.createdAt.toMillis()
+        : b.createdAt
+          ? new Date(b.createdAt).getTime()
+          : 0;
+
+    return timeB - timeA;
+  });
   view.innerHTML = `<div class="page-actions"><button class="btn btn-primary" id="new-job"><i class="fa-solid fa-plus"></i> เพิ่มงานซ่อม</button></div>
     <div class="table-card"><div class="table-head"><span>รถ</span><span>อาการ</span><span>ช่าง</span><span>สถานะ</span><span>ค่าใช้จ่าย</span></div>
     ${jobs.map(j=>`<div class="table-row" data-id="${j.id}"><span><strong>${escapeHtml(j.motorcycleModel||"-")}</strong><small>${escapeHtml(j.plate||"")}</small></span><span>${escapeHtml(j.problem||"-")}</span><span>${escapeHtml(j.mechanicName||"-")}</span><span>${statusPill(j.status)}</span><span>฿${Number(j.totalCost||0).toLocaleString()}</span></div>`).join("") || `<div class="empty-state"><i class="fa-solid fa-wrench"></i><h3>ยังไม่มีงานซ่อม</h3><p>ข้อมูลจะปรากฏเมื่อมีใบงาน</p></div>`}
