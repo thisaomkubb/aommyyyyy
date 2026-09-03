@@ -762,6 +762,31 @@ async function renderBooking(view) {
         }
       );
 
+      await addDoc(
+  collection(db, "notifications"),
+  {
+    audience: "staff",
+    type: "new_booking",
+
+    title: "มีนัดหมายใหม่",
+
+    message:
+      `${bike.brand} ${bike.model} ` +
+      `วันที่ ${$("#booking-date").value} ` +
+      `เวลา ${$("#booking-time").value}`,
+
+    relatedType: "booking",
+
+    relatedId: "new",
+
+    createdBy: state.user.uid,
+
+    read: false,
+
+    createdAt: serverTimestamp()
+  }
+);
+      
       toast(
         "สร้างนัดหมายแล้ว",
         "success"
