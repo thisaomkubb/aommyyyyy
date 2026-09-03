@@ -1157,6 +1157,18 @@ async function renderDashboard(view) {
   }
 }
 
+function metricCard(label,value,icon,tone){
+  return `<div class="bento-card metric ${tone}">
+    <div class="metric-icon">
+      <i class="fa-solid ${icon}"></i>
+    </div>
+    <div>
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </div>
+  </div>`;
+}
+
 function emptyInline(text){ return `<div class="empty-inline"><i class="fa-regular fa-face-meh"></i>${escapeHtml(text)}</div>`; }
 function jobRow(j){ return `<div class="list-row"><div class="row-icon"><i class="fa-solid fa-wrench"></i></div><div class="row-main"><strong>${escapeHtml(j.motorcycleModel||"รถไม่ระบุ")}</strong><span>${escapeHtml(j.problem||"-")}</span></div><div>${statusPill(j.status)}</div></div>`; }
 
