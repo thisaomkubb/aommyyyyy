@@ -1355,6 +1355,18 @@ async function openJobDetail(job) {
             modal.querySelector("#edit-cost").value
           ) || 0;
 
+        const noteToCustomer =
+  modal
+    .querySelector("#edit-note-customer")
+    ?.value
+    .trim() || "";
+
+const noteToOwner =
+  modal
+    .querySelector("#edit-note-owner")
+    ?.value
+    .trim() || "";
+
 
         // ถ้าเป็นช่าง ห้ามแก้งานที่เสร็จสิ้น
         if (isMechanic && job.status === "เสร็จสิ้น") {
@@ -1379,6 +1391,98 @@ async function openJobDetail(job) {
             updatedBy: state.user.uid
           }
         );
+        await updateDoc(
+  doc(db, "repairs", job.id),
+  {
+    status: newStatus,
+
+    totalCost: newCost,
+
+    noteToCustomer: noteToCustomer,
+
+    noteToOwner: noteToOwner,
+
+    updatedAt: serverTimestamp(),
+
+    updatedBy: state.user.uid
+  }
+);
+        if (
+  isMechanic &&
+  noteToCustomer
+) {
+
+  await addDoc(
+    collection(db, "notifications"),
+    {
+      recipientId:
+        job.customerId,
+
+      type:
+        "repair_note",
+
+      title:
+        "มีข้อความจากช่าง",
+
+      message:
+        noteToCustomer,
+
+      relatedType:
+        "repair",
+
+      relatedId:
+        job.id,
+
+      createdBy:
+        state.user.uid,
+
+      read:
+        false,
+
+      createdAt:
+        serverTimestamp()
+    }
+  );
+
+}
+        if (
+  isMechanic &&
+  noteToOwner
+) {
+
+  await addDoc(
+    collection(db, "notifications"),
+    {
+      audience:
+        "owner",
+
+      type:
+        "mechanic_note",
+
+      title:
+        "มีหมายเหตุจากช่าง",
+
+      message:
+        noteToOwner,
+
+      relatedType:
+        "repair",
+
+      relatedId:
+        job.id,
+
+      createdBy:
+        state.user.uid,
+
+      read:
+        false,
+
+      createdAt:
+        serverTimestamp()
+    }
+  );
+
+}
 
 
         modal.remove();
