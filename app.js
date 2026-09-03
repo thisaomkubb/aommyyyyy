@@ -19,7 +19,8 @@ import {
   limit,
   serverTimestamp,
   deleteDoc,
-  updateDoc
+  updateDoc,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
 
 const $ = (s) => document.querySelector(s);
@@ -122,6 +123,282 @@ $("#register-form").addEventListener("submit", async (e)=>{
   } catch (err) { toast(firebaseError(err), "error"); }
 });
 
+// ==========================================
+// NOTIFICATION SYSTEM
+// ==========================================
+
+let notificationUnsubs = [];
+let notificationIds = new Set();
+let notificationReady = false;
+
+
+// ------------------------------------------
+// เริ่มระบบ Notification
+// ------------------------------------------
+
+function startNotificationListener() {
+
+  // ถ้ามี listener เก่า ให้ยกเลิกก่อน
+  notificationUnsubs.forEach(unsub => unsub());
+  notificationUnsubs = [];
+
+  if (!state.user || !state.profile) {
+    return;
+  }
+
+  const uid = state.user.uid;
+  const role = state.profile.role;
+
+
+  // ----------------------------------------
+  // ฟัง Notification ที่ส่งตรงถึง User
+  // ----------------------------------------
+
+  const personalQuery = query(
+    collection(db, "notifications"),
+    where("recipientId", "==", uid),
+    limit(30)
+  );
+
+
+  const personalUnsub = onSnapshot(
+    personalQuery,
+
+    snapshot => {
+
+      handleNotificationSnapshot(snapshot);
+
+    },
+
+    error => {
+
+      console.error(
+        "Personal notification listener:",
+        error
+      );
+
+    }
+  );
+
+
+  notificationUnsubs.push(personalUnsub);
+
+
+  // ----------------------------------------
+  // Notification ตาม Role
+  // ----------------------------------------
+
+  if (role === "mechanic" || role === "owner") {
+
+    const staffQuery = query(
+      collection(db, "notifications"),
+      where("audience", "==", "staff"),
+      limit(30)
+    );
+
+
+    const staffUnsub = onSnapshot(
+      staffQuery,
+
+      snapshot => {
+
+        handleNotificationSnapshot(snapshot);
+
+      },
+
+      error => {
+
+        console.error(
+          "Staff notification listener:",
+          error
+        );
+
+      }
+    );
+
+
+    notificationUnsubs.push(staffUnsub);
+
+  }
+
+
+  // ----------------------------------------
+  // Owner-only Notification
+  // ----------------------------------------
+
+  if (role === "owner") {
+
+    const ownerQuery = query(
+      collection(db, "notifications"),
+      where("audience", "==", "owner"),
+      limit(30)
+    );
+
+
+    const ownerUnsub = onSnapshot(
+      ownerQuery,
+
+      snapshot => {
+
+        handleNotificationSnapshot(snapshot);
+
+      },
+
+      error => {
+
+        console.error(
+          "Owner notification listener:",
+          error
+        );
+
+      }
+    );
+
+
+    notificationUnsubs.push(ownerUnsub);
+
+  }
+
+
+  // ----------------------------------------
+  // Customer Notification
+  // ----------------------------------------
+
+  if (role === "customer") {
+
+    const customerQuery = query(
+      collection(db, "notifications"),
+      where("recipientId", "==", uid),
+      limit(30)
+    );
+
+
+    const customerUnsub = onSnapshot(
+      customerQuery,
+
+      snapshot => {
+
+        handleNotificationSnapshot(snapshot);
+
+      },
+
+      error => {
+
+        console.error(
+          "Customer notification listener:",
+          error
+        );
+
+      }
+    );
+
+
+    notificationUnsubs.push(customerUnsub);
+
+  }
+
+
+  notificationReady = true;
+}
+
+
+// ==========================================
+// รับ Notification ใหม่
+// ==========================================
+
+function handleNotificationSnapshot(snapshot) {
+
+  snapshot.docChanges().forEach(change => {
+
+    const data = change.doc.data();
+
+    if (change.type === "added") {
+
+      // ถ้า Notification นี้ยังไม่เคยแสดง
+      if (!notificationIds.has(change.doc.id)) {
+
+        notificationIds.add(change.doc.id);
+
+        // ไม่เด้งทุก Notification เก่าตอน Login
+        if (notificationReady) {
+
+          showNotificationToast(data);
+
+        }
+
+      }
+
+    }
+
+  });
+
+
+  renderNotificationBell(snapshot);
+}
+
+
+// ==========================================
+// Toast Notification
+// ==========================================
+
+function showNotificationToast(data) {
+
+  const title =
+    data.title || "มีการแจ้งเตือนใหม่";
+
+  const message =
+    data.message || "";
+
+
+  toast(
+    `${title}: ${message}`,
+    "info"
+  );
+
+}
+
+
+// ==========================================
+// แสดงจำนวน Notification
+// ==========================================
+
+function renderNotificationBell(snapshot) {
+
+  const bell =
+    $("#notification-count");
+
+  if (!bell) return;
+
+
+  let unread = 0;
+
+
+  snapshot.forEach(docSnap => {
+
+    const data = docSnap.data();
+
+    if (data.read !== true) {
+
+      unread++;
+
+    }
+
+  });
+
+
+  bell.textContent =
+    unread > 99
+      ? "99+"
+      : unread;
+
+
+  bell.classList.toggle(
+    "hidden",
+    unread === 0
+  );
+
+}
+
 function firebaseError(err) {
   const map = {
     "auth/invalid-credential":"อีเมลหรือรหัสผ่านไม่ถูกต้อง",
@@ -155,6 +432,7 @@ function bootApp() {
   $("#auth-screen").classList.add("hidden");
   $("#app-screen").classList.remove("hidden");
   buildNav();
+  startNotificationListener();
   $("#avatar").textContent = (state.profile.name || "U").slice(0,1).toUpperCase();
   $("#role-badge").textContent = roleLabels[state.profile.role] || "ผู้ใช้";
   route(state.profile.role === "mechanic" ? "jobs" : state.profile.role === "owner" ? "dashboard" : "dashboard");
