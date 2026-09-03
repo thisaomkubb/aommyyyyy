@@ -132,121 +132,408 @@ let notificationStore = new Map();
 let notificationInitialSnapshots = 0;
 let notificationListenerCount = 0;
 let notificationReady = false;
+let notificationButtonBound = false;
+let notificationOutsideClickBound = false;
 
 function ensureNotificationUI() {
-  // สร้างปุ่มกระดิ่งใน Topbar ถ้ายังไม่มีใน index.html
-  const topUser = document.querySelector('.top-user');
-  if (topUser && !document.querySelector('#notification-btn')) {
-    const btn = document.createElement('button');
-    btn.id = 'notification-btn';
-    btn.className = 'notification-btn';
-    btn.title = 'การแจ้งเตือน';
-    btn.innerHTML = '<i class="fa-solid fa-bell"></i><span id="notification-count" class="notification-count hidden">0</span>';
+  const topUser = document.querySelector(".top-user");
+  if (!topUser) return;
+
+  let btn = document.querySelector("#notification-btn");
+
+  // ใช้ปุ่มจาก index.html ถ้ามีอยู่แล้ว
+  // ถ้าไม่มี ค่อยสร้างให้เอง
+  if (!btn) {
+    btn = document.createElement("button");
+    btn.id = "notification-btn";
+    btn.className = "notification-btn";
+    btn.title = "การแจ้งเตือน";
+    btn.innerHTML =
+      '<i class="fa-solid fa-bell"></i>' +
+      '<span id="notification-count" class="notification-count hidden">0</span>';
+
     topUser.insertBefore(btn, topUser.firstElementChild);
-    btn.addEventListener('click', () => renderNotificationPanel());
   }
 
-  // สร้าง CSS ให้ Notification โดยไม่ต้องแก้ style.css ทันที
-  if (!document.querySelector('#notification-inline-style')) {
-    const style = document.createElement('style');
-    style.id = 'notification-inline-style';
+  // ถ้ามีปุ่มแล้ว แต่ไม่มีตัวเลข
+  if (!btn.querySelector("#notification-count")) {
+    const count = document.createElement("span");
+    count.id = "notification-count";
+    count.className = "notification-count hidden";
+    count.textContent = "0";
+    btn.appendChild(count);
+  }
+
+  // ผูก event แค่ครั้งเดียว
+  if (!notificationButtonBound) {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      renderNotificationPanel();
+    });
+    notificationButtonBound = true;
+  }
+
+  // ปิด panel เมื่อคลิกข้างนอก
+  if (!notificationOutsideClickBound) {
+    document.addEventListener("click", (e) => {
+      const panel = document.querySelector("#notification-panel");
+      const button = document.querySelector("#notification-btn");
+
+      if (!panel) return;
+
+      if (
+        !panel.contains(e.target) &&
+        e.target !== button &&
+        !button?.contains(e.target)
+      ) {
+        panel.remove();
+      }
+    });
+
+    notificationOutsideClickBound = true;
+  }
+
+  // CSS ของ Notification
+  if (!document.querySelector("#notification-inline-style")) {
+    const style = document.createElement("style");
+    style.id = "notification-inline-style";
     style.textContent = `
-      .notification-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:#cbd2d9;display:grid;place-items:center;position:relative;cursor:pointer}
-      .notification-btn:hover{color:#fff;border-color:var(--orange)}
-      .notification-count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;background:var(--red);color:#fff;border-radius:999px;font-size:9px;font-weight:700;border:2px solid var(--bg)}
-      .notification-count.hidden{display:none}
-      .notification-dashboard-card{background:linear-gradient(145deg,rgba(255,122,0,.10),var(--panel));}
-      .notification-big-icon{color:var(--orange);font-size:20px}
-      .notification-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
-      .notification-row:last-child{border-bottom:0}
-      .notification-row:hover{opacity:.85}
-      .notification-row.unread{background:rgba(255,122,0,.05);border-radius:12px;padding-left:8px;padding-right:8px}
-      .notification-row-icon{width:38px;height:38px;border-radius:12px;background:rgba(255,122,0,.10);color:var(--orange);display:grid;place-items:center;flex:none}
-      .notification-row-main{min-width:0;flex:1}
-      .notification-row-main strong{display:block;margin-bottom:3px}
-      .notification-row-main span{display:block;color:var(--muted);font-size:12px;line-height:1.5;word-break:break-word}
-      .notification-row-time{font-size:10px;color:var(--muted);white-space:nowrap}
-      .notification-panel{position:fixed;top:76px;right:24px;width:min(390px,calc(100vw - 32px));max-height:70vh;overflow:auto;z-index:9999;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:16px}
-      .notification-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
-      .notification-panel-close{border:0;background:transparent;color:var(--muted);font-size:22px;cursor:pointer}
-      @media(max-width:650px){.notification-panel{top:68px;right:12px;width:calc(100vw - 24px)}}
+      .notification-btn{
+        width:40px;
+        height:40px;
+        border-radius:12px;
+        border:1px solid var(--line);
+        background:var(--panel2);
+        color:#cbd2d9;
+        display:grid;
+        place-items:center;
+        position:relative;
+        cursor:pointer;
+        flex:none;
+      }
+
+      .notification-btn:hover{
+        color:#fff;
+        border-color:var(--orange);
+      }
+
+      .notification-count{
+        position:absolute;
+        top:-5px;
+        right:-5px;
+        min-width:18px;
+        height:18px;
+        padding:0 5px;
+        display:grid;
+        place-items:center;
+        background:var(--red);
+        color:#fff;
+        border-radius:999px;
+        font-size:9px;
+        font-weight:700;
+        border:2px solid var(--bg);
+      }
+
+      .notification-count.hidden{
+        display:none;
+      }
+
+      .notification-dashboard-card{
+        background:
+          linear-gradient(
+            145deg,
+            rgba(255,122,0,.10),
+            var(--panel)
+          );
+      }
+
+      .notification-big-icon{
+        color:var(--orange);
+        font-size:20px;
+      }
+
+      .notification-row{
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:12px 0;
+        border-bottom:1px solid var(--line);
+        cursor:pointer;
+      }
+
+      .notification-row:last-child{
+        border-bottom:0;
+      }
+
+      .notification-row:hover{
+        opacity:.86;
+      }
+
+      .notification-row.unread{
+        background:rgba(255,122,0,.05);
+        border-radius:12px;
+        padding-left:8px;
+        padding-right:8px;
+      }
+
+      .notification-row-icon{
+        width:38px;
+        height:38px;
+        border-radius:12px;
+        background:rgba(255,122,0,.10);
+        color:var(--orange);
+        display:grid;
+        place-items:center;
+        flex:none;
+      }
+
+      .notification-row-main{
+        min-width:0;
+        flex:1;
+      }
+
+      .notification-row-main strong{
+        display:block;
+        margin-bottom:3px;
+      }
+
+      .notification-row-main span{
+        display:block;
+        color:var(--muted);
+        font-size:12px;
+        line-height:1.5;
+        word-break:break-word;
+      }
+
+      .notification-row-time{
+        font-size:10px;
+        color:var(--muted);
+        white-space:nowrap;
+      }
+
+      .notification-panel{
+        position:fixed;
+        top:76px;
+        right:24px;
+        width:min(390px,calc(100vw - 32px));
+        max-height:70vh;
+        overflow:auto;
+        z-index:9999;
+        background:var(--panel);
+        border:1px solid var(--line);
+        border-radius:20px;
+        box-shadow:var(--shadow);
+        padding:16px;
+      }
+
+      .notification-panel-head{
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        margin-bottom:8px;
+      }
+
+      .notification-panel-close{
+        border:0;
+        background:transparent;
+        color:var(--muted);
+        font-size:22px;
+        cursor:pointer;
+      }
+
+      .notification-empty{
+        min-height:80px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        gap:10px;
+        color:var(--muted);
+        font-size:13px;
+        text-align:center;
+      }
+
+      @media(max-width:650px){
+        .notification-panel{
+          top:68px;
+          right:12px;
+          width:calc(100vw - 24px);
+        }
+
+        .notification-row-time{
+          display:none;
+        }
+      }
     `;
+
     document.head.appendChild(style);
   }
 }
 
-function notificationIcon(type='') {
-  if (type === 'new_booking') return 'fa-calendar-check';
-  if (type === 'repair_status') return 'fa-screwdriver-wrench';
-  if (type === 'repair_note') return 'fa-comment-dots';
-  if (type === 'mechanic_note') return 'fa-user-gear';
-  return 'fa-bell';
+function notificationIcon(type="") {
+  if (type === "new_booking") return "fa-calendar-check";
+  if (type === "job_accepted") return "fa-screwdriver-wrench";
+  if (type === "status_change") return "fa-arrows-rotate";
+  if (type === "repair_note") return "fa-comment-dots";
+  if (type === "mechanic_note") return "fa-user-gear";
+  return "fa-bell";
 }
 
 function notificationTime(data) {
   const raw = data?.createdAt;
-  if (!raw) return 'เมื่อสักครู่';
+
+  if (!raw) return "เมื่อสักครู่";
+
   try {
     const d = raw.toDate ? raw.toDate() : new Date(raw);
-    return d.toLocaleString('th-TH', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+    if (Number.isNaN(d.getTime())) {
+      return "เมื่อสักครู่";
+    }
+
+    return d.toLocaleString("th-TH", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
   } catch {
-    return 'เมื่อสักครู่';
+    return "เมื่อสักครู่";
   }
 }
 
 function startNotificationListener() {
-  notificationUnsubs.forEach(unsub => unsub());
+  notificationUnsubs.forEach(unsub => {
+    try {
+      unsub();
+    } catch {}
+  });
+
   notificationUnsubs = [];
   notificationStore = new Map();
-  notificationReady = false;
   notificationInitialSnapshots = 0;
+  notificationListenerCount = 0;
+  notificationReady = false;
 
   ensureNotificationUI();
-  if (!state.user || !state.profile) return;
+
+  if (!state.user || !state.profile) {
+    renderNotificationUI();
+    return;
+  }
 
   const uid = state.user.uid;
   const role = state.profile.role;
   const listeners = [];
 
-  // แจ้งเตือนส่วนตัว: ใช้เพียงครั้งเดียว ไม่สร้าง personal/customer ซ้ำ
-  listeners.push(query(collection(db,'notifications'), where('recipientId','==',uid), limit(30)));
+  // Notification ส่วนตัว
+  listeners.push(
+    query(
+      collection(db, "notifications"),
+      where("recipientId", "==", uid),
+      limit(30)
+    )
+  );
 
-  if (role === 'mechanic' || role === 'owner') {
-    listeners.push(query(collection(db,'notifications'), where('audience','==','staff'), limit(30)));
+  // Notification สำหรับ Mechanic / Owner
+  if (role === "mechanic" || role === "owner") {
+    listeners.push(
+      query(
+        collection(db, "notifications"),
+        where("audience", "==", "staff"),
+        limit(30)
+      )
+    );
   }
 
-  if (role === 'owner') {
-    listeners.push(query(collection(db,'notifications'), where('audience','==','owner'), limit(30)));
+  // Notification สำหรับ Owner
+  if (role === "owner") {
+    listeners.push(
+      query(
+        collection(db, "notifications"),
+        where("audience", "==", "owner"),
+        limit(30)
+      )
+    );
   }
 
   notificationListenerCount = listeners.length;
 
-  listeners.forEach((qref, index) => {
-    const unsub = onSnapshot(qref, snapshot => {
-      let isInitial = notificationInitialSnapshots < notificationListenerCount;
+  listeners.forEach((qref) => {
+    const unsub = onSnapshot(
+      qref,
+      snapshot => {
 
-      snapshot.forEach(docSnap => {
-        notificationStore.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
-      });
+        // ข้อมูลชุดแรก = Notification เก่า
+        // ไม่ต้อง Toast
+        const isInitial =
+          notificationInitialSnapshots <
+          notificationListenerCount;
 
-      notificationInitialSnapshots++;
-      if (notificationInitialSnapshots >= notificationListenerCount) {
-        notificationReady = true;
-      }
+        snapshot.forEach(docSnap => {
+          const old =
+            notificationStore.get(docSnap.id);
 
-      if (!isInitial) {
-        snapshot.docChanges().forEach(change => {
-          if (change.type === 'added' && notificationReady) {
-            const data = change.doc.data();
-            showNotificationToast(data);
-          }
+          notificationStore.set(
+            docSnap.id,
+            {
+              id: docSnap.id,
+              ...docSnap.data(),
+              _toastShown:
+                old?._toastShown || false
+            }
+          );
         });
-      }
 
-      renderNotificationUI();
-    }, error => {
-      console.error(`Notification listener ${index}:`, error);
-    });
+        notificationInitialSnapshots++;
+
+        if (
+          notificationInitialSnapshots >=
+          notificationListenerCount
+        ) {
+          notificationReady = true;
+        }
+
+        // หลังจากโหลดข้อมูลเก่าเสร็จแล้ว
+        // Notification ใหม่จึง Toast
+        if (!isInitial && notificationReady) {
+          snapshot.docChanges().forEach(change => {
+
+            if (change.type !== "added") return;
+
+            const data = change.doc.data();
+            const current =
+              notificationStore.get(change.doc.id);
+
+            if (!current?._toastShown) {
+
+              notificationStore.set(
+                change.doc.id,
+                {
+                  id: change.doc.id,
+                  ...data,
+                  _toastShown: true
+                }
+              );
+
+              showNotificationToast(data);
+            }
+          });
+        }
+
+        renderNotificationUI();
+      },
+
+      error => {
+        console.error(
+          "Notification listener error:",
+          error
+        );
+
+        renderNotificationUI();
+      }
+    );
 
     notificationUnsubs.push(unsub);
   });
@@ -255,103 +542,436 @@ function startNotificationListener() {
 }
 
 function showNotificationToast(data) {
-  const title = data?.title || 'มีการแจ้งเตือนใหม่';
-  const message = data?.message || '';
-  toast(`${title}: ${message}`, 'info');
+  const title =
+    data?.title || "มีการแจ้งเตือนใหม่";
+
+  const message =
+    data?.message || "";
+
+  toast(
+    `${title}: ${message}`,
+    "info"
+  );
+}
+
+function getNotificationItems() {
+  return [...notificationStore.values()]
+    .sort((a, b) => {
+
+      const ta =
+        a.createdAt?.toMillis
+          ? a.createdAt.toMillis()
+          : 0;
+
+      const tb =
+        b.createdAt?.toMillis
+          ? b.createdAt.toMillis()
+          : 0;
+
+      return tb - ta;
+    });
 }
 
 function renderNotificationUI() {
-  const items = [...notificationStore.values()].sort((a,b) => {
-    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-    return tb - ta;
-  });
+  ensureNotificationUI();
 
-  const unread = items.filter(x => x.read !== true).length;
-  const count = $('#notification-count');
+  const items =
+    getNotificationItems();
+
+  const unread =
+    items.filter(
+      item => item.read !== true
+    ).length;
+
+  // จำนวนบนกระดิ่ง
+  const count =
+    $("#notification-count");
+
   if (count) {
-    count.textContent = unread > 99 ? '99+' : String(unread);
-    count.classList.toggle('hidden', unread === 0);
+
+    count.textContent =
+      unread > 99
+        ? "99+"
+        : String(unread);
+
+    count.classList.toggle(
+      "hidden",
+      unread === 0
+    );
   }
 
-  const dash = $('#dashboard-notifications');
-  if (dash) {
-    dash.innerHTML = items.slice(0,5).map(notificationRowHtml).join('') || emptyInline('ยังไม่มีการแจ้งเตือน');
-    bindNotificationRows(dash);
+  // Card บน Dashboard
+  const dashboard =
+    $("#dashboard-notifications");
+
+  if (dashboard) {
+
+    dashboard.innerHTML =
+      items.length
+        ? items
+            .slice(0, 5)
+            .map(notificationRowHtml)
+            .join("")
+        : `
+          <div class="notification-empty">
+            <i class="fa-regular fa-bell"></i>
+            ยังไม่มีการแจ้งเตือน
+          </div>
+        `;
+
+    bindNotificationRows(dashboard);
+  }
+
+  // อัปเดต Panel ถ้าเปิดอยู่
+  const panel =
+    $("#notification-panel");
+
+  if (panel) {
+    renderNotificationPanel(true);
   }
 }
 
 function notificationRowHtml(n) {
-  const cls = n.read === true ? 'notification-row' : 'notification-row unread';
-  return `<div class="${cls}" data-notification-id="${escapeHtml(n.id)}">
-    <div class="notification-row-icon"><i class="fa-solid ${notificationIcon(n.type)}"></i></div>
-    <div class="notification-row-main">
-      <strong>${escapeHtml(n.title || 'แจ้งเตือน')}</strong>
-      <span>${escapeHtml(n.message || '')}</span>
+
+  return `
+    <div
+      class="${
+        n.read === true
+          ? "notification-row"
+          : "notification-row unread"
+      }"
+      data-notification-id="${escapeHtml(n.id)}"
+    >
+
+      <div class="notification-row-icon">
+        <i class="fa-solid ${notificationIcon(n.type)}"></i>
+      </div>
+
+      <div class="notification-row-main">
+
+        <strong>
+          ${escapeHtml(
+            n.title || "แจ้งเตือน"
+          )}
+        </strong>
+
+        <span>
+          ${escapeHtml(
+            n.message || ""
+          )}
+        </span>
+
+      </div>
+
+      <div class="notification-row-time">
+        ${escapeHtml(
+          notificationTime(n)
+        )}
+      </div>
+
     </div>
-    <div class="notification-row-time">${escapeHtml(notificationTime(n))}</div>
-  </div>`;
+  `;
 }
 
-function bindNotificationRows(root=document) {
-  root.querySelectorAll('.notification-row').forEach(row => {
-    row.addEventListener('click', async () => {
-      const id = row.dataset.notificationId;
-      const n = notificationStore.get(id);
-      if (!n) return;
+function bindNotificationRows(root) {
+  if (!root) return;
 
-      try {
-        await updateDoc(doc(db,'notifications',id), { read:true });
-        const current = notificationStore.get(id);
-        if (current) current.read = true;
-        renderNotificationUI();
-      } catch (err) {
-        console.error('Mark notification as read:', err);
+  root
+    .querySelectorAll(
+      ".notification-row"
+    )
+    .forEach(row => {
+
+      row.onclick = async () => {
+
+        const id =
+          row.dataset.notificationId;
+
+        const notification =
+          notificationStore.get(id);
+
+        if (!notification) return;
+
+        const relatedType =
+          notification.relatedType;
+
+        if (
+          notification.read !== true
+        ) {
+
+          try {
+
+            await updateDoc(
+              doc(
+                db,
+                "notifications",
+                id
+              ),
+              {
+                read: true
+              }
+            );
+
+            const current =
+              notificationStore.get(id);
+
+            if (current) {
+              current.read = true;
+              notificationStore.set(
+                id,
+                current
+              );
+            }
+
+            renderNotificationUI();
+
+          } catch (err) {
+
+            console.error(
+              "Mark notification as read:",
+              err
+            );
+
+            toast(
+              "อ่านแจ้งเตือนไม่สำเร็จ",
+              "error"
+            );
+          }
+        }
+
+        document
+          .querySelector(
+            "#notification-panel"
+          )
+          ?.remove();
+
+        if (relatedType === "booking") {
+          route("booking");
+        }
+
+        if (relatedType === "repair") {
+          route(
+            state.profile.role === "customer"
+              ? "repairs"
+              : "jobs"
+          );
+        }
+      };
+    });
+}
+
+function renderNotificationPanel(refreshOnly = false) {
+
+  const old =
+    document.querySelector(
+      "#notification-panel"
+    );
+
+  if (old && !refreshOnly) {
+    old.remove();
+    return;
+  }
+
+  let panel = old;
+
+  if (!panel) {
+    panel =
+      document.createElement("div");
+
+    panel.id =
+      "notification-panel";
+
+    panel.className =
+      "notification-panel";
+
+    document.body.appendChild(panel);
+  }
+
+  const items =
+    getNotificationItems();
+
+  panel.innerHTML = `
+    <div class="notification-panel-head">
+
+      <div>
+        <span class="eyebrow">
+          NOTIFICATIONS
+        </span>
+
+        <h3>
+          การแจ้งเตือน
+        </h3>
+      </div>
+
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          gap:8px;
+        "
+      >
+
+        <button
+          id="mark-all-notifications"
+          class="notification-panel-close"
+          style="font-size:11px;"
+        >
+          อ่านทั้งหมด
+        </button>
+
+        <button
+          id="close-notification-panel"
+          class="notification-panel-close"
+          aria-label="ปิด"
+        >
+          ×
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="notification-panel-list">
+
+      ${
+        items.length
+          ? items
+              .map(notificationRowHtml)
+              .join("")
+          : `
+            <div class="notification-empty">
+              <i class="fa-regular fa-bell"></i>
+              ยังไม่มีการแจ้งเตือน
+            </div>
+          `
       }
 
-      const panel = document.querySelector('#notification-panel');
-      if (panel) panel.remove();
+    </div>
+  `;
 
-      if (n.relatedType === 'booking') route('booking');
-      else if (n.relatedType === 'repair') route(state.profile.role === 'customer' ? 'repairs' : 'jobs');
-    });
-  });
-}
+  $("#close-notification-panel")
+    ?.addEventListener(
+      "click",
+      () => panel.remove()
+    );
 
-function renderNotificationPanel() {
-  const old = document.querySelector('#notification-panel');
-  if (old) { old.remove(); return; }
+  $("#mark-all-notifications")
+    ?.addEventListener(
+      "click",
+      markAllNotificationsRead
+    );
 
-  const panel = document.createElement('div');
-  panel.id = 'notification-panel';
-  panel.className = 'notification-panel';
-  const items = [...notificationStore.values()].sort((a,b) => {
-    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
-    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
-    return tb - ta;
-  });
-  panel.innerHTML = `<div class="notification-panel-head"><div><span class="eyebrow">NOTIFICATIONS</span><h3>การแจ้งเตือน</h3></div><button class="notification-panel-close">×</button></div>${items.map(notificationRowHtml).join('') || emptyInline('ยังไม่มีการแจ้งเตือน')}`;
-  document.body.appendChild(panel);
-  panel.querySelector('.notification-panel-close').onclick = () => panel.remove();
   bindNotificationRows(panel);
 }
 
+async function markAllNotificationsRead() {
+
+  const unread =
+    getNotificationItems().filter(
+      n => n.read !== true
+    );
+
+  if (!unread.length) {
+    toast(
+      "ไม่มีแจ้งเตือนที่ยังไม่ได้อ่าน",
+      "info"
+    );
+    return;
+  }
+
+  try {
+
+    for (const notification of unread) {
+
+      await updateDoc(
+        doc(
+          db,
+          "notifications",
+          notification.id
+        ),
+        {
+          read: true
+        }
+      );
+
+      const current =
+        notificationStore.get(
+          notification.id
+        );
+
+      if (current) {
+        current.read = true;
+        notificationStore.set(
+          notification.id,
+          current
+        );
+      }
+    }
+
+    renderNotificationUI();
+    renderNotificationPanel(true);
+
+  } catch (err) {
+
+    console.error(
+      "Mark all notifications:",
+      err
+    );
+
+    toast(
+      "อ่านแจ้งเตือนทั้งหมดไม่สำเร็จ",
+      "error"
+    );
+  }
+}
+
 function notificationCardHtml() {
-  return `<div class="bento-card wide notification-dashboard-card">
-    <div class="card-head">
-      <div><span class="eyebrow">NOTIFICATIONS</span><h3>แจ้งเตือนล่าสุด</h3></div>
-      <i class="fa-solid fa-bell notification-big-icon"></i>
+
+  return `
+    <div
+      class="bento-card wide notification-dashboard-card"
+    >
+
+      <div class="card-head">
+
+        <div>
+          <span class="eyebrow">
+            NOTIFICATIONS
+          </span>
+
+          <h3>
+            แจ้งเตือนล่าสุด
+          </h3>
+        </div>
+
+        <i
+          class="fa-solid fa-bell notification-big-icon"
+        ></i>
+
+      </div>
+
+      <div id="dashboard-notifications">
+
+        <div class="notification-empty">
+          <i class="fa-regular fa-bell"></i>
+          กำลังโหลดการแจ้งเตือน...
+        </div>
+
+      </div>
+
     </div>
-    <div id="dashboard-notifications">${emptyInline('กำลังโหลดการแจ้งเตือน...')}</div>
-  </div>`;
+  `;
 }
 
 function createNotification(data) {
-  return addDoc(collection(db,'notifications'), {
-    ...data,
-    read:false,
-    createdAt:serverTimestamp()
-  });
+  return addDoc(
+    collection(db, "notifications"),
+    {
+      ...data,
+      read: false,
+      createdAt: serverTimestamp()
+    }
+  );
 }
 
 function firebaseError(err) {
@@ -389,7 +1009,6 @@ function bootApp() {
   buildNav();
   ensureNotificationUI();
   startNotificationListener();
-  ensureNotificationUI();
   $("#avatar").textContent = (state.profile.name || "U").slice(0,1).toUpperCase();
   $("#role-badge").textContent = roleLabels[state.profile.role] || "ผู้ใช้";
   route(state.profile.role === "mechanic" ? "jobs" : state.profile.role === "owner" ? "dashboard" : "dashboard");
@@ -500,7 +1119,6 @@ async function renderDashboard(view) {
         <div class="bento-card tall"><div class="card-head"><div><span class="eyebrow">LOW STOCK</span><h3>อะไหล่ต้องเติม</h3></div></div>
           ${parts.filter(x=>(Number(x.stock)||0)<=5).slice(0,7).map(p=>`<div class="stock-row"><span>${escapeHtml(p.name)}</span><b>${Number(p.stock)||0}</b></div>`).join("") || emptyInline("สต๊อกยังปกติ")}
         </div>
-        ${notificationDashboardCardHtml()}
       </div>`;
       renderNotificationUI();
   } else if (role === "mechanic") {
@@ -539,10 +1157,6 @@ async function renderDashboard(view) {
   }
 }
 
-function notificationDashboardCardHtml(){return `<div class="bento-card wide notification-dashboard-card"><div class="card-head"><div><span class="eyebrow">NOTIFICATIONS</span><h3>แจ้งเตือนล่าสุด</h3></div><i class="fa-solid fa-bell notification-big-icon"></i></div><div id="dashboard-notifications"><div class="notification-empty"><i class="fa-regular fa-bell"></i> กำลังโหลดการแจ้งเตือน...</div></div></div>`;}
-function metricCard(label,value,icon,tone) {
-  return `<div class="bento-card metric ${tone}"><div class="metric-icon"><i class="fa-solid ${icon}"></i></div><div><span>${label}</span><strong>${value}</strong></div></div>`;
-}
 function emptyInline(text){ return `<div class="empty-inline"><i class="fa-regular fa-face-meh"></i>${escapeHtml(text)}</div>`; }
 function jobRow(j){ return `<div class="list-row"><div class="row-icon"><i class="fa-solid fa-wrench"></i></div><div class="row-main"><strong>${escapeHtml(j.motorcycleModel||"รถไม่ระบุ")}</strong><span>${escapeHtml(j.problem||"-")}</span></div><div>${statusPill(j.status)}</div></div>`; }
 
