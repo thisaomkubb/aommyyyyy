@@ -128,275 +128,230 @@ $("#register-form").addEventListener("submit", async (e)=>{
 // ==========================================
 
 let notificationUnsubs = [];
-let notificationIds = new Set();
+let notificationStore = new Map();
+let notificationInitialSnapshots = 0;
+let notificationListenerCount = 0;
 let notificationReady = false;
 
+function ensureNotificationUI() {
+  // สร้างปุ่มกระดิ่งใน Topbar ถ้ายังไม่มีใน index.html
+  const topUser = document.querySelector('.top-user');
+  if (topUser && !document.querySelector('#notification-btn')) {
+    const btn = document.createElement('button');
+    btn.id = 'notification-btn';
+    btn.className = 'notification-btn';
+    btn.title = 'การแจ้งเตือน';
+    btn.innerHTML = '<i class="fa-solid fa-bell"></i><span id="notification-count" class="notification-count hidden">0</span>';
+    topUser.insertBefore(btn, topUser.firstElementChild);
+    btn.addEventListener('click', () => renderNotificationPanel());
+  }
 
-// ------------------------------------------
-// เริ่มระบบ Notification
-// ------------------------------------------
+  // สร้าง CSS ให้ Notification โดยไม่ต้องแก้ style.css ทันที
+  if (!document.querySelector('#notification-inline-style')) {
+    const style = document.createElement('style');
+    style.id = 'notification-inline-style';
+    style.textContent = `
+      .notification-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:#cbd2d9;display:grid;place-items:center;position:relative;cursor:pointer}
+      .notification-btn:hover{color:#fff;border-color:var(--orange)}
+      .notification-count{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center;background:var(--red);color:#fff;border-radius:999px;font-size:9px;font-weight:700;border:2px solid var(--bg)}
+      .notification-count.hidden{display:none}
+      .notification-dashboard-card{background:linear-gradient(145deg,rgba(255,122,0,.10),var(--panel));}
+      .notification-big-icon{color:var(--orange);font-size:20px}
+      .notification-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);cursor:pointer}
+      .notification-row:last-child{border-bottom:0}
+      .notification-row:hover{opacity:.85}
+      .notification-row.unread{background:rgba(255,122,0,.05);border-radius:12px;padding-left:8px;padding-right:8px}
+      .notification-row-icon{width:38px;height:38px;border-radius:12px;background:rgba(255,122,0,.10);color:var(--orange);display:grid;place-items:center;flex:none}
+      .notification-row-main{min-width:0;flex:1}
+      .notification-row-main strong{display:block;margin-bottom:3px}
+      .notification-row-main span{display:block;color:var(--muted);font-size:12px;line-height:1.5;word-break:break-word}
+      .notification-row-time{font-size:10px;color:var(--muted);white-space:nowrap}
+      .notification-panel{position:fixed;top:76px;right:24px;width:min(390px,calc(100vw - 32px));max-height:70vh;overflow:auto;z-index:9999;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);padding:16px}
+      .notification-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+      .notification-panel-close{border:0;background:transparent;color:var(--muted);font-size:22px;cursor:pointer}
+      @media(max-width:650px){.notification-panel{top:68px;right:12px;width:calc(100vw - 24px)}}
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+function notificationIcon(type='') {
+  if (type === 'new_booking') return 'fa-calendar-check';
+  if (type === 'repair_status') return 'fa-screwdriver-wrench';
+  if (type === 'repair_note') return 'fa-comment-dots';
+  if (type === 'mechanic_note') return 'fa-user-gear';
+  return 'fa-bell';
+}
+
+function notificationTime(data) {
+  const raw = data?.createdAt;
+  if (!raw) return 'เมื่อสักครู่';
+  try {
+    const d = raw.toDate ? raw.toDate() : new Date(raw);
+    return d.toLocaleString('th-TH', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+  } catch {
+    return 'เมื่อสักครู่';
+  }
+}
 
 function startNotificationListener() {
-
-  // ถ้ามี listener เก่า ให้ยกเลิกก่อน
   notificationUnsubs.forEach(unsub => unsub());
   notificationUnsubs = [];
+  notificationStore = new Map();
+  notificationReady = false;
+  notificationInitialSnapshots = 0;
 
-  if (!state.user || !state.profile) {
-    return;
-  }
+  ensureNotificationUI();
+  if (!state.user || !state.profile) return;
 
   const uid = state.user.uid;
   const role = state.profile.role;
+  const listeners = [];
 
+  // แจ้งเตือนส่วนตัว: ใช้เพียงครั้งเดียว ไม่สร้าง personal/customer ซ้ำ
+  listeners.push(query(collection(db,'notifications'), where('recipientId','==',uid), limit(30)));
 
-  // ----------------------------------------
-  // ฟัง Notification ที่ส่งตรงถึง User
-  // ----------------------------------------
-
-  const personalQuery = query(
-    collection(db, "notifications"),
-    where("recipientId", "==", uid),
-    limit(30)
-  );
-
-
-  const personalUnsub = onSnapshot(
-    personalQuery,
-
-    snapshot => {
-
-      handleNotificationSnapshot(snapshot);
-
-    },
-
-    error => {
-
-      console.error(
-        "Personal notification listener:",
-        error
-      );
-
-    }
-  );
-
-
-  notificationUnsubs.push(personalUnsub);
-
-
-  // ----------------------------------------
-  // Notification ตาม Role
-  // ----------------------------------------
-
-  if (role === "mechanic" || role === "owner") {
-
-    const staffQuery = query(
-      collection(db, "notifications"),
-      where("audience", "==", "staff"),
-      limit(30)
-    );
-
-
-    const staffUnsub = onSnapshot(
-      staffQuery,
-
-      snapshot => {
-
-        handleNotificationSnapshot(snapshot);
-
-      },
-
-      error => {
-
-        console.error(
-          "Staff notification listener:",
-          error
-        );
-
-      }
-    );
-
-
-    notificationUnsubs.push(staffUnsub);
-
+  if (role === 'mechanic' || role === 'owner') {
+    listeners.push(query(collection(db,'notifications'), where('audience','==','staff'), limit(30)));
   }
 
-
-  // ----------------------------------------
-  // Owner-only Notification
-  // ----------------------------------------
-
-  if (role === "owner") {
-
-    const ownerQuery = query(
-      collection(db, "notifications"),
-      where("audience", "==", "owner"),
-      limit(30)
-    );
-
-
-    const ownerUnsub = onSnapshot(
-      ownerQuery,
-
-      snapshot => {
-
-        handleNotificationSnapshot(snapshot);
-
-      },
-
-      error => {
-
-        console.error(
-          "Owner notification listener:",
-          error
-        );
-
-      }
-    );
-
-
-    notificationUnsubs.push(ownerUnsub);
-
+  if (role === 'owner') {
+    listeners.push(query(collection(db,'notifications'), where('audience','==','owner'), limit(30)));
   }
 
+  notificationListenerCount = listeners.length;
 
-  // ----------------------------------------
-  // Customer Notification
-  // ----------------------------------------
+  listeners.forEach((qref, index) => {
+    const unsub = onSnapshot(qref, snapshot => {
+      let isInitial = notificationInitialSnapshots < notificationListenerCount;
 
-  if (role === "customer") {
+      snapshot.forEach(docSnap => {
+        notificationStore.set(docSnap.id, { id: docSnap.id, ...docSnap.data() });
+      });
 
-    const customerQuery = query(
-      collection(db, "notifications"),
-      where("recipientId", "==", uid),
-      limit(30)
-    );
-
-
-    const customerUnsub = onSnapshot(
-      customerQuery,
-
-      snapshot => {
-
-        handleNotificationSnapshot(snapshot);
-
-      },
-
-      error => {
-
-        console.error(
-          "Customer notification listener:",
-          error
-        );
-
-      }
-    );
-
-
-    notificationUnsubs.push(customerUnsub);
-
-  }
-
-
-  notificationReady = true;
-}
-
-
-// ==========================================
-// รับ Notification ใหม่
-// ==========================================
-
-function handleNotificationSnapshot(snapshot) {
-
-  snapshot.docChanges().forEach(change => {
-
-    const data = change.doc.data();
-
-    if (change.type === "added") {
-
-      // ถ้า Notification นี้ยังไม่เคยแสดง
-      if (!notificationIds.has(change.doc.id)) {
-
-        notificationIds.add(change.doc.id);
-
-        // ไม่เด้งทุก Notification เก่าตอน Login
-        if (notificationReady) {
-
-          showNotificationToast(data);
-
-        }
-
+      notificationInitialSnapshots++;
+      if (notificationInitialSnapshots >= notificationListenerCount) {
+        notificationReady = true;
       }
 
-    }
+      if (!isInitial) {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === 'added' && notificationReady) {
+            const data = change.doc.data();
+            showNotificationToast(data);
+          }
+        });
+      }
 
+      renderNotificationUI();
+    }, error => {
+      console.error(`Notification listener ${index}:`, error);
+    });
+
+    notificationUnsubs.push(unsub);
   });
 
-
-  renderNotificationBell(snapshot);
+  renderNotificationUI();
 }
-
-
-// ==========================================
-// Toast Notification
-// ==========================================
 
 function showNotificationToast(data) {
-
-  const title =
-    data.title || "มีการแจ้งเตือนใหม่";
-
-  const message =
-    data.message || "";
-
-
-  toast(
-    `${title}: ${message}`,
-    "info"
-  );
-
+  const title = data?.title || 'มีการแจ้งเตือนใหม่';
+  const message = data?.message || '';
+  toast(`${title}: ${message}`, 'info');
 }
 
-
-// ==========================================
-// แสดงจำนวน Notification
-// ==========================================
-
-function renderNotificationBell(snapshot) {
-
-  const bell =
-    $("#notification-count");
-
-  if (!bell) return;
-
-
-  let unread = 0;
-
-
-  snapshot.forEach(docSnap => {
-
-    const data = docSnap.data();
-
-    if (data.read !== true) {
-
-      unread++;
-
-    }
-
+function renderNotificationUI() {
+  const items = [...notificationStore.values()].sort((a,b) => {
+    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return tb - ta;
   });
 
+  const unread = items.filter(x => x.read !== true).length;
+  const count = $('#notification-count');
+  if (count) {
+    count.textContent = unread > 99 ? '99+' : String(unread);
+    count.classList.toggle('hidden', unread === 0);
+  }
 
-  bell.textContent =
-    unread > 99
-      ? "99+"
-      : unread;
+  const dash = $('#dashboard-notifications');
+  if (dash) {
+    dash.innerHTML = items.slice(0,5).map(notificationRowHtml).join('') || emptyInline('ยังไม่มีการแจ้งเตือน');
+    bindNotificationRows(dash);
+  }
+}
 
+function notificationRowHtml(n) {
+  const cls = n.read === true ? 'notification-row' : 'notification-row unread';
+  return `<div class="${cls}" data-notification-id="${escapeHtml(n.id)}">
+    <div class="notification-row-icon"><i class="fa-solid ${notificationIcon(n.type)}"></i></div>
+    <div class="notification-row-main">
+      <strong>${escapeHtml(n.title || 'แจ้งเตือน')}</strong>
+      <span>${escapeHtml(n.message || '')}</span>
+    </div>
+    <div class="notification-row-time">${escapeHtml(notificationTime(n))}</div>
+  </div>`;
+}
 
-  bell.classList.toggle(
-    "hidden",
-    unread === 0
-  );
+function bindNotificationRows(root=document) {
+  root.querySelectorAll('.notification-row').forEach(row => {
+    row.addEventListener('click', async () => {
+      const id = row.dataset.notificationId;
+      const n = notificationStore.get(id);
+      if (!n) return;
 
+      try {
+        await updateDoc(doc(db,'notifications',id), { read:true });
+        const current = notificationStore.get(id);
+        if (current) current.read = true;
+        renderNotificationUI();
+      } catch (err) {
+        console.error('Mark notification as read:', err);
+      }
+
+      const panel = document.querySelector('#notification-panel');
+      if (panel) panel.remove();
+
+      if (n.relatedType === 'booking') route('booking');
+      else if (n.relatedType === 'repair') route(state.profile.role === 'customer' ? 'repairs' : 'jobs');
+    });
+  });
+}
+
+function renderNotificationPanel() {
+  const old = document.querySelector('#notification-panel');
+  if (old) { old.remove(); return; }
+
+  const panel = document.createElement('div');
+  panel.id = 'notification-panel';
+  panel.className = 'notification-panel';
+  const items = [...notificationStore.values()].sort((a,b) => {
+    const ta = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+    const tb = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+    return tb - ta;
+  });
+  panel.innerHTML = `<div class="notification-panel-head"><div><span class="eyebrow">NOTIFICATIONS</span><h3>การแจ้งเตือน</h3></div><button class="notification-panel-close">×</button></div>${items.map(notificationRowHtml).join('') || emptyInline('ยังไม่มีการแจ้งเตือน')}`;
+  document.body.appendChild(panel);
+  panel.querySelector('.notification-panel-close').onclick = () => panel.remove();
+  bindNotificationRows(panel);
+}
+
+function notificationCardHtml() {
+  return `<div class="bento-card wide notification-dashboard-card">
+    <div class="card-head">
+      <div><span class="eyebrow">NOTIFICATIONS</span><h3>แจ้งเตือนล่าสุด</h3></div>
+      <i class="fa-solid fa-bell notification-big-icon"></i>
+    </div>
+    <div id="dashboard-notifications">${emptyInline('กำลังโหลดการแจ้งเตือน...')}</div>
+  </div>`;
+}
+
+function createNotification(data) {
+  return addDoc(collection(db,'notifications'), {
+    ...data,
+    read:false,
+    createdAt:serverTimestamp()
+  });
 }
 
 function firebaseError(err) {
@@ -432,7 +387,9 @@ function bootApp() {
   $("#auth-screen").classList.add("hidden");
   $("#app-screen").classList.remove("hidden");
   buildNav();
+  ensureNotificationUI();
   startNotificationListener();
+  ensureNotificationUI();
   $("#avatar").textContent = (state.profile.name || "U").slice(0,1).toUpperCase();
   $("#role-badge").textContent = roleLabels[state.profile.role] || "ผู้ใช้";
   route(state.profile.role === "mechanic" ? "jobs" : state.profile.role === "owner" ? "dashboard" : "dashboard");
@@ -539,10 +496,13 @@ async function renderDashboard(view) {
         <div class="bento-card wide"><div class="card-head"><div><span class="eyebrow">SERVICE FLOW</span><h3>ภาพรวมงานล่าสุด</h3></div><button class="icon-btn" onclick="location.hash='jobs'"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></div>
           ${jobs.slice(0,6).map(j=>`<div class="list-row"><div class="row-icon"><i class="fa-solid fa-wrench"></i></div><div class="row-main"><strong>${escapeHtml(j.motorcycleModel||"รถไม่ระบุ")}</strong><span>${escapeHtml(j.problem||"งานซ่อม")}</span></div>${statusPill(j.status)}</div>`).join("") || emptyInline("ยังไม่มีงานซ่อม")}
         </div>
+        ${notificationCardHtml()}
         <div class="bento-card tall"><div class="card-head"><div><span class="eyebrow">LOW STOCK</span><h3>อะไหล่ต้องเติม</h3></div></div>
           ${parts.filter(x=>(Number(x.stock)||0)<=5).slice(0,7).map(p=>`<div class="stock-row"><span>${escapeHtml(p.name)}</span><b>${Number(p.stock)||0}</b></div>`).join("") || emptyInline("สต๊อกยังปกติ")}
         </div>
+        ${notificationDashboardCardHtml()}
       </div>`;
+      renderNotificationUI();
   } else if (role === "mechanic") {
     const jobs = await fetchCollection("repairs",[["mechanicId","==",state.user.uid]]);
     const active = jobs.filter(j=>j.status!=="เสร็จสิ้น");
@@ -553,8 +513,10 @@ async function renderDashboard(view) {
       <div class="bento-card wide"><div class="card-head"><div><span class="eyebrow">MY WORK ORDERS</span><h3>งานที่ต้องจัดการ</h3></div><button class="btn btn-small btn-primary" onclick="window.routeForUI('jobs')">ดูทั้งหมด</button></div>
         ${jobs.slice(0,8).map(j=>jobRow(j)).join("") || emptyInline("ยังไม่มีงานที่ได้รับมอบหมาย")}
       </div>
+      ${notificationCardHtml()}
       <div class="bento-card accent-card"><i class="fa-solid fa-bolt"></i><span class="eyebrow">ENGINE LAB</span><h3>คำนวณสเปกก่อนลงมือ</h3><p>CC • CR • Rod Ratio • Vg • หัวฉีด • ลิ้นเร่ง • ท่อไอเสีย</p><button class="btn btn-ghost" onclick="window.routeForUI('calculator')">เปิด Engine Lab</button></div>
     </div>`;
+    renderNotificationUI();
   } else {
     const [bikes, bookings, repairs, calcs] = await Promise.all([
       fetchCollection("motorcycles",[["customerId","==",state.user.uid]]),
@@ -570,12 +532,14 @@ async function renderDashboard(view) {
       <div class="bento-card wide"><div class="card-head"><div><span class="eyebrow">MY GARAGE</span><h3>รถของฉัน</h3></div><button class="btn btn-small btn-primary" onclick="window.routeForUI('motorcycles')">จัดการรถ</button></div>
         ${bikes.slice(0,5).map(b=>`<div class="list-row"><div class="bike-photo"><i class="fa-solid fa-motorcycle"></i></div><div class="row-main"><strong>${escapeHtml(b.brand)} ${escapeHtml(b.model)}</strong><span>${escapeHtml(b.plate||"ไม่ระบุทะเบียน")} • ${Number(b.mileage||0).toLocaleString()} km</span></div><span class="muted">${escapeHtml(b.year||"")}</span></div>`).join("") || emptyInline("ยังไม่มีรถ")}
       </div>
+      ${notificationCardHtml()}
       <div class="bento-card"><div class="card-head"><div><span class="eyebrow">NEXT STEP</span><h3>อยากเข้าร้านเมื่อไหร่?</h3></div></div><p class="muted">จองคิวซ่อม/เช็กระยะได้จากมือถือในไม่กี่คลิก</p><button class="btn btn-primary" onclick="window.routeForUI('booking')"><i class="fa-solid fa-calendar-plus"></i> นัดหมายเลย</button></div>
       <div class="bento-card accent-card"><span class="eyebrow">ENGINE LAB</span><h3>เก็บสเปกเครื่องไว้กับบัญชีคุณ</h3><p>สามารถคำนวณสเปกเครื่องในแบบที่ต้องการคร่าวๆ และบันทึกเก็บไว้ได้</p><button class="btn btn-ghost" onclick="window.routeForUI('calculator')">เปิดเครื่องคำนวณ</button></div>
     </div>`;
   }
 }
 
+function notificationDashboardCardHtml(){return `<div class="bento-card wide notification-dashboard-card"><div class="card-head"><div><span class="eyebrow">NOTIFICATIONS</span><h3>แจ้งเตือนล่าสุด</h3></div><i class="fa-solid fa-bell notification-big-icon"></i></div><div id="dashboard-notifications"><div class="notification-empty"><i class="fa-regular fa-bell"></i> กำลังโหลดการแจ้งเตือน...</div></div></div>`;}
 function metricCard(label,value,icon,tone) {
   return `<div class="bento-card metric ${tone}"><div class="metric-icon"><i class="fa-solid ${icon}"></i></div><div><span>${label}</span><strong>${value}</strong></div></div>`;
 }
@@ -736,7 +700,7 @@ async function renderBooking(view) {
         x => x.id === $("#booking-bike").value
       );
 
-      await addDoc(
+      const bookingRef = await addDoc(
         collection(db, "bookings"),
         {
           customerId: state.user.uid,
@@ -777,7 +741,7 @@ async function renderBooking(view) {
 
     relatedType: "booking",
 
-    relatedId: "new",
+    relatedId: bookingRef.id,
 
     createdBy: state.user.uid,
 
@@ -974,6 +938,8 @@ async function renderBooking(view) {
             }
           );
 
+
+          await addDoc(collection(db,"notifications"), { recipientId: booking.customerId, type: "job_accepted", title: "ช่างรับงานแล้ว", message: `${booking.motorcycleModel || "รถของคุณ"} ได้รับการรับงานจากช่างแล้ว`, relatedType: "booking", relatedId: booking.id, createdBy: state.user.uid, read:false, createdAt:serverTimestamp() });
 
           toast(
             "รับงานเรียบร้อยแล้ว",
@@ -1383,33 +1349,18 @@ const noteToOwner =
 
 
         await updateDoc(
-          doc(db, "repairs", job.id),
-          {
-            status: newStatus,
-            totalCost: newCost,
-            updatedAt: serverTimestamp(),
-            updatedBy: state.user.uid
-          }
+          doc(db,"repairs",job.id),
+          { status:newStatus, totalCost:newCost, noteToCustomer, noteToOwner, updatedAt:serverTimestamp(), updatedBy:state.user.uid }
         );
-        await updateDoc(
-  doc(db, "repairs", job.id),
-  {
-    status: newStatus,
 
-    totalCost: newCost,
+        if(newStatus!==job.status && job.customerId){
+          await addDoc(collection(db,"notifications"), { recipientId:job.customerId, type:"status_change", title:"สถานะงานซ่อมเปลี่ยนแล้ว", message:`งาน ${job.motorcycleModel || "ของคุณ"} เปลี่ยนเป็น "${newStatus}"`, relatedType:"repair", relatedId:job.id, createdBy:state.user.uid, read:false, createdAt:serverTimestamp() });
+        }
 
-    noteToCustomer: noteToCustomer,
-
-    noteToOwner: noteToOwner,
-
-    updatedAt: serverTimestamp(),
-
-    updatedBy: state.user.uid
-  }
-);
         if (
   isMechanic &&
-  noteToCustomer
+  noteToCustomer &&
+  job.customerId
 ) {
 
   await addDoc(
@@ -1441,8 +1392,7 @@ const noteToOwner =
 
       createdAt:
         serverTimestamp()
-    }
-  );
+          });
 
 }
         if (
@@ -1479,8 +1429,7 @@ const noteToOwner =
 
       createdAt:
         serverTimestamp()
-    }
-  );
+          });
 
 }
 
