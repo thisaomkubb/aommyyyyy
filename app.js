@@ -1217,6 +1217,32 @@ async function openJobDetail(job) {
                 >
 
               </label>
+              <label>
+  หมายเหตุถึงลูกค้า
+
+  <textarea
+    id="edit-note-customer"
+    rows="4"
+    placeholder="เช่น พบว่าผ้าเบรกสึก ควรเปลี่ยนภายในระยะถัดไป"
+  >${escapeHtml(
+    job.noteToCustomer || ""
+  )}</textarea>
+
+</label>
+
+
+<label>
+  หมายเหตุถึงเจ้าของร้าน
+
+  <textarea
+    id="edit-note-owner"
+    rows="4"
+    placeholder="เช่น ต้องสั่งอะไหล่เพิ่ม หรือพบปัญหาเพิ่มเติม"
+  >${escapeHtml(
+    job.noteToOwner || ""
+  )}</textarea>
+
+</label>
 
 
               ${
