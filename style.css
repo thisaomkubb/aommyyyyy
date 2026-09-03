@@ -1699,3 +1699,20 @@ select:focus{
   font-weight:700;
   border:2px solid var(--bg);
 }
+.job-edit-box textarea{
+  width:100%;
+  min-height:100px;
+  resize:vertical;
+  border:1px solid var(--line);
+  background:#0e1216;
+  color:#fff;
+  border-radius:14px;
+  padding:12px 14px;
+  outline:0;
+  font-family:'Kanit',sans-serif;
+}
+
+.job-edit-box textarea:focus{
+  border-color:var(--orange);
+  box-shadow:0 0 0 3px rgba(255,122,0,.1);
+}
