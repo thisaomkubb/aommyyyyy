@@ -56,7 +56,6 @@ const navByRole = {
     ["dashboard","fa-chart-pie","Dashboard"],
     ["customers","fa-users","ลูกค้า"],
     ["jobs","fa-screwdriver-wrench","งานซ่อม"],
-    ["inventory","fa-boxes-stacked","สต๊อกอะไหล่"],
     ["reports","fa-chart-line","รายงาน"],
     ["calculator","fa-gauge-high","Engine Lab"]
   ]
@@ -1099,28 +1098,116 @@ function statusPill(status="รอดำเนินการ") {
 async function renderDashboard(view) {
   const role = state.profile.role;
   if (role === "owner") {
-    const [customers, jobs, parts] = await Promise.all([
-      fetchCollection("users",[["role","==","customer"]]),
-      fetchCollection("repairs"),
-      fetchCollection("parts")
-    ]);
-    const total = jobs.reduce((s,x)=>s+(Number(x.totalCost)||0),0);
-    const low = parts.filter(x=>(Number(x.stock)||0)<=5).length;
-    view.innerHTML = `
-      <div class="bento-grid dashboard-grid">
-        ${metricCard("รายได้รวม","฿"+total.toLocaleString(),"fa-baht-sign","orange")}
-        ${metricCard("ลูกค้า",""+customers.length,"fa-users","blue")}
-        ${metricCard("งานซ่อม",""+jobs.length,"fa-screwdriver-wrench","green")}
-        ${metricCard("อะไหล่ใกล้หมด",""+low,"fa-box-open","red")}
-        <div class="bento-card wide"><div class="card-head"><div><span class="eyebrow">SERVICE FLOW</span><h3>ภาพรวมงานล่าสุด</h3></div><button class="icon-btn" onclick="location.hash='jobs'"><i class="fa-solid fa-arrow-up-right-from-square"></i></button></div>
-          ${jobs.slice(0,6).map(j=>`<div class="list-row"><div class="row-icon"><i class="fa-solid fa-wrench"></i></div><div class="row-main"><strong>${escapeHtml(j.motorcycleModel||"รถไม่ระบุ")}</strong><span>${escapeHtml(j.problem||"งานซ่อม")}</span></div>${statusPill(j.status)}</div>`).join("") || emptyInline("ยังไม่มีงานซ่อม")}
+  const [customers, jobs] = await Promise.all([
+    fetchCollection("users", [["role", "==", "customer"]]),
+    fetchCollection("repairs")
+  ]);
+
+  const total = jobs.reduce(
+    (sum, job) => sum + (Number(job.totalCost) || 0),
+    0
+  );
+
+  view.innerHTML = `
+    <div class="bento-grid dashboard-grid">
+
+      <!-- รายได้รวม -->
+      ${metricCard(
+        "รายได้รวม",
+        "฿" + total.toLocaleString(),
+        "fa-baht-sign",
+        "orange"
+      )}
+
+      <!-- จำนวนลูกค้า -->
+      ${metricCard(
+        "ลูกค้า",
+        String(customers.length),
+        "fa-users",
+        "blue"
+      )}
+
+      <!-- จำนวนงานซ่อม -->
+      ${metricCard(
+        "งานซ่อม",
+        String(jobs.length),
+        "fa-screwdriver-wrench",
+        "green"
+      )}
+
+      <!-- งานล่าสุด -->
+      <div class="bento-card wide">
+
+        <div class="card-head">
+
+          <div>
+            <span class="eyebrow">
+              SERVICE FLOW
+            </span>
+
+            <h3>
+              ภาพรวมงานล่าสุด
+            </h3>
+          </div>
+
+          <button
+            class="icon-btn"
+            onclick="location.hash='jobs'"
+            title="ดูงานซ่อม"
+          >
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </button>
+
         </div>
-        ${notificationCardHtml()}
-        <div class="bento-card tall"><div class="card-head"><div><span class="eyebrow">LOW STOCK</span><h3>อะไหล่ต้องเติม</h3></div></div>
-          ${parts.filter(x=>(Number(x.stock)||0)<=5).slice(0,7).map(p=>`<div class="stock-row"><span>${escapeHtml(p.name)}</span><b>${Number(p.stock)||0}</b></div>`).join("") || emptyInline("สต๊อกยังปกติ")}
-        </div>
-      </div>`;
-      renderNotificationUI();
+
+        ${
+          jobs.length
+            ? jobs
+                .slice(0, 6)
+                .map(job => `
+                  <div class="list-row">
+
+                    <div class="row-icon">
+                      <i class="fa-solid fa-wrench"></i>
+                    </div>
+
+                    <div class="row-main">
+
+                      <strong>
+                        ${escapeHtml(
+                          job.motorcycleModel ||
+                          "รถไม่ระบุ"
+                        )}
+                      </strong>
+
+                      <span>
+                        ${escapeHtml(
+                          job.problem ||
+                          "งานซ่อม"
+                        )}
+                      </span>
+
+                    </div>
+
+                    ${statusPill(job.status)}
+
+                  </div>
+                `)
+                .join("")
+            : emptyInline("ยังไม่มีงานซ่อม")
+        }
+
+      </div>
+
+      <!-- แจ้งเตือน -->
+      ${notificationCardHtml()}
+
+    </div>
+  `;
+
+  // อัปเดต Notification บน Dashboard
+  renderNotificationUI();
+
   } else if (role === "mechanic") {
     const jobs = await fetchCollection("repairs",[["mechanicId","==",state.user.uid]]);
     const active = jobs.filter(j=>j.status!=="เสร็จสิ้น");
